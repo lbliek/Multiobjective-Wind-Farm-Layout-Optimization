@@ -1,6 +1,8 @@
 Wind Farm Problem Generator
+
 This repository provides a simple and modular way to generate synthetic wind farm layout problems for optimization experiments.
 The generator creates:
+
 a feasible area polygon, which represents the area available for wind turbine placement after excluding shipping and fishery constraints,
 an oil & gas field polygon, which represents an additional forbidden region,
 deterministic problem instances, so the same configuration returns the same problems every time.
@@ -47,19 +49,28 @@ plot\_problem(problem\_1, title="Problem 1")
 ```
 Indicator functions
 Each problem instance provides three indicator functions:
+
 `available\_area\_indicator(x, y)`  
 Returns `1` if the point is inside the available area polygon, otherwise `0`.
+
 `oil\_gas\_indicator(x, y)`  
 Returns `1` if the point is inside the oil & gas polygon, otherwise `0`.
+
 `feasibility\_indicator(x, y)`  
 Returns `1` if the point is inside the unit-square solution space, inside the available area, and outside the oil & gas polygon. Otherwise it returns `0`.
+
+
 These functions are intentionally simple so they can be called directly inside optimization routines.
+
 Reproducibility
 The generator uses a fixed random seed from the configuration.  
 As long as the configuration and the seed remain unchanged, the same problem instances will be generated.
+
 Notes on geometry
 Available area
+
 The available area is generated as a convex or non-convex polygon and then tuned using uniform scaling so that its coverage inside the unit square matches a target percentage.
+
 Oil & gas field
 The oil & gas field is generated inside a larger context square centered on the unit square. It is also tuned using uniform scaling so that its intersection with the unit square matches the requested target percentage.
 Visualization
