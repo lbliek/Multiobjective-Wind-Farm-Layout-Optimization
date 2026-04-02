@@ -3,14 +3,14 @@ from typing import Dict, Tuple
 import numpy as np
 from shapely.geometry import Polygon
 
-from .config import GeneratorConfig
-from .geometry import (
+from config import GeneratorConfig
+from geometry import (
     UNIT_SQUARE,
     ensure_valid_polygon,
     make_context_square,
     tune_polygon_uniform_scale_to_coverage,
 )
-from .instance import ProblemInstance
+from instance import ProblemInstance
 
 
 def random_star_polygon(

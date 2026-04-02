@@ -38,6 +38,15 @@ Install the required packages:
 pip install -r requirements.txt
 ```
 
+On Linux, the following is also needed for visualization:
+
+```python
+pip install pyQT6
+
+sudo apt-get install -y libxcb-cursor-dev
+```
+
+
 ## Typical use case
 
 ```python

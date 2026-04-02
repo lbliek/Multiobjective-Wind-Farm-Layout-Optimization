@@ -1,5 +1,6 @@
-from windfarm_problem import GeneratorConfig, generate_problem_instances
-from windfarm_problem.visualization import plot_problem
+from config import GeneratorConfig
+from generator import generate_problem_instances
+from visualization import plot_problem
 
 config = GeneratorConfig(
     n_designs=3,

@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from .geometry import UNIT_SQUARE
+from geometry import UNIT_SQUARE
 
 
 def plot_problem(problem, title: str = "Wind farm problem") -> None:

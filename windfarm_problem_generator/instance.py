@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from shapely.geometry import Point
 
-from .geometry import UNIT_SQUARE, ensure_valid_polygon
+from geometry import UNIT_SQUARE, ensure_valid_polygon
 
 
 @dataclass
