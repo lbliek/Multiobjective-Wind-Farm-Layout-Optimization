@@ -10,7 +10,7 @@ from evaluation import WindFarmEvaluator
 from visualization import plot_problem
 
 
-CSV_PATH = "random_search_results.csv"
+
 
 
 config = GeneratorConfig(
@@ -22,12 +22,18 @@ config = GeneratorConfig(
     target_reservoir_coverage_percent=20.0,
 )
 
+seed = config.seed
+
+# CSV_PATH = f"results/random_search_seed{seed}.csv"
+CSV_PATH = f"results/nsga2_seed{seed}.csv"
+
 problems = generate_problem_instances(config)
 
 problem_2 = problems[2]
 
 
 evaluator = WindFarmEvaluator(problem_2, ensemble_file="Ensemble.pkl", n_turbines=5)
+
 
 
 # 3. Load random search results
@@ -49,7 +55,7 @@ print("Number of non-dominated solutions:", len(first_front_idx))
 
 
 # 5. Pick one non-dominated solution
-pick_id = 0   # you can change this to 1, 2, 3, ...
+pick_id = 1   # you can change this to 1, 2, 3, ...
 if pick_id >= len(first_front_idx):
     raise IndexError(f"pick_id={pick_id} is out of range for first front of size {len(first_front_idx)}")
 
@@ -72,10 +78,22 @@ print("hub =", hub)
 
 
 # 7. Plot the selected layout
+# plot_problem(
+#     problem_2,
+#     x=x,
+#     hub=hub,
+#     evaluator=evaluator,
+#     title=f"random_search_seed{seed}",
+#     path=f"results/RS_seed{seed}.png"
+# )
+
+
+
 plot_problem(
     problem_2,
     x=x,
     hub=hub,
     evaluator=evaluator,
-    title=f"Chosen non-dominated solution (eval_id={row['eval_id']})",
+    title=f"NSGA2_seed{seed}",
+    path=f"results/NSGA2_seed{seed}.png"
 )

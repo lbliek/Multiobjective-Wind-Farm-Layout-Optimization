@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-
-from shapely.geometry import Point
-
 from geometry import UNIT_SQUARE, ensure_valid_polygon
+from shapely.geometry import Point, box
+
 
 
 @dataclass
@@ -15,6 +14,7 @@ class ProblemInstance:
     feasible_cov: float
     reservoir_covs: list
     allow_boundary: bool = True
+    hub_outer_bound: float = 1.5
 
     def __post_init__(self) -> None:
         self.feasible = ensure_valid_polygon(self.feasible)
@@ -39,7 +39,7 @@ class ProblemInstance:
         )
         return int(inside)
 
-    def feasibility_indicator(self, x: float, y: float) -> int:
+    def feasibility_turbine(self, x: float, y: float) -> int:
         """
         Return 1 if the point is:
         #- inside the 1x1 solution space,#
@@ -49,14 +49,31 @@ class ProblemInstance:
         """
         p = Point(float(x), float(y))
 
-        # in_solution = UNIT_SQUARE.covers(p) if self.allow_boundary else UNIT_SQUARE.contains(p)
+        in_solution = UNIT_SQUARE.covers(p) if self.allow_boundary else UNIT_SQUARE.contains(p)
         in_feasible = self.feasible.covers(p) if self.allow_boundary else self.feasible.contains(p)
         in_reservoir = any(
             r.covers(p) if self.allow_boundary else r.contains(p)
             for r in self.reservoirs
         )
-        return int(in_feasible and (not in_reservoir))
-        # return int(in_solution and in_feasible and (not in_reservoir))
+        return int(in_solution and in_feasible and (not in_reservoir))
+
+
+
+
+    def feasibility_hub(self, x: float, y: float) -> int:
+        p = Point(float(x), float(y))
+        
+        HUB_OUTER_BOX = box(0.0, 0.0, self.hub_outer_bound, self.hub_outer_bound)
+
+        in_outer_box = HUB_OUTER_BOX.covers(p) if self.allow_boundary else HUB_OUTER_BOX.contains(p)
+        in_unit_square = UNIT_SQUARE.covers(p) if self.allow_boundary else UNIT_SQUARE.contains(p)
+        in_feasible = self.feasible.covers(p) if self.allow_boundary else self.feasible.contains(p)
+        in_reservoir = any(
+            r.covers(p) if self.allow_boundary else r.contains(p)
+            for r in self.reservoirs
+        )
+
+        return int(in_outer_box and (not in_unit_square) and in_feasible and (not in_reservoir))
 
     def check_point(self, x: float, y: float) -> dict:
         """

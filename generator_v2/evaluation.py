@@ -124,17 +124,6 @@ class WindFarmEvaluator:
 
         cv = 2 * self.rotor_diameter - min_dist * self.farm_length
         return float(cv)
-
-    # # only check coordinates of turbines
-    # def constraint2(self, x) -> int:
-    #     coords = self._to_coords(x)
-    #     n_violate = 0
-
-    #     for xi, yi in coords:
-    #         if self.problem.feasibility_indicator(xi, yi) == 0:
-    #             n_violate += 1
-
-    #     return int(n_violate)
     
     # check the feasibility of turbines and the hub
     def constraint2(self, x, hub) -> int:
@@ -144,10 +133,10 @@ class WindFarmEvaluator:
         n_violate = 0
 
         for xi, yi in coords:
-            if self.problem.feasibility_indicator(xi, yi) == 0:
+            if self.problem.feasibility_turbine(xi, yi) == 0:
                 n_violate += 1
 
-        if self.problem.feasibility_indicator(hub[0], hub[1]) == 0:
+        if self.problem.feasibility_hub(hub[0], hub[1]) == 0:
             n_violate += 1
 
         return int(n_violate)

@@ -43,6 +43,10 @@ class GeneratorConfig:
     # Allowed deviation from the target available-area coverage.
     feasible_tolerance_percent: float = 2.0
 
+    # ---------- hub ----------
+    # outer_bound of the hub 
+    hub_outer_bound: float = 1.5
+
     # ---------- Oil & gas polygon ----------
     # number of reservoirs
     n_reservoirs: int = 3

@@ -32,7 +32,7 @@ def sample_solution(problem, n_turbines: int, hub_bounds=(1.0, 1.5), rng=None, m
             xi = rng.uniform(0.0, 1.0)
             yi = rng.uniform(0.0, 1.0)
 
-            if problem.feasibility_indicator(xi, yi) == 1:
+            if problem.feasibility_turbine(xi, yi) == 1:
                 turbine_coords.append((xi, yi))
                 accepted = True
                 break
@@ -53,7 +53,7 @@ def sample_solution(problem, n_turbines: int, hub_bounds=(1.0, 1.5), rng=None, m
 
         outside_unit_square = (hx > 1.0) or (hy > 1.0)
 
-        if outside_unit_square and problem.feasibility_indicator(hx, hy) == 1:
+        if outside_unit_square and problem.feasibility_hub(hx, hy) == 1:
             hub = [float(hx), float(hy)]
             accepted = True
             break

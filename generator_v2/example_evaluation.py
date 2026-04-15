@@ -34,4 +34,4 @@ print(evaluator.evaluate(x, hub))
 # plot_problem(problem_2, len_plot=1.6, title="Toy problem_2")
 
 # problem and solution plot
-plot_problem(problem_2, x=x, hub=hub, len_plot=1.6, evaluator=evaluator, title="Problem 2")
+plot_problem(problem_2, x=x, hub=hub, len_plot=1.6, evaluator=evaluator, title="Problem 2", path=f"results/problem_2.png")

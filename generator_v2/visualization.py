@@ -8,7 +8,7 @@ from scipy.sparse.csgraph import minimum_spanning_tree
 from geometry import UNIT_SQUARE
 
 
-def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title: str = "Wind farm problem") -> None:
+def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title: str = "Wind farm problem", path="results/chosen_layout.png") -> None:
     """
     Plot the 1x1 solution space, feasible region, reservoir regions,
     optionally turbine locations, and optionally bird group.
@@ -116,4 +116,6 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
 
     ax.set_title(title)
     ax.legend()
+    plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.show()
+    
