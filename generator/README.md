@@ -95,10 +95,10 @@ x = [0.87601546, 0.30708387, 0.95377465, 0.57068488, 0.51457379,
 print(evaluator.evaluate(x, hub))
 
 # problem plot
-plot_problem(problem_2, len_plot=1.6, title="Toy problem_2")
+plot_problem(problem_2, len_plot=1.6, title="Toy problem_2", path=f"results/problem_2.png")
 
 # problem and solution plot
-plot_problem(problem_2, x=x, hub=hub, len_plot=1.6, evaluator=evaluator, title="Problem 2", path=f"results/problem_2.png")
+plot_problem(problem_2, x=x, hub=hub, len_plot=1.6, evaluator=evaluator, title="Solution", path=f"results/Solution.png")
 ```
 
 ## Reproducibility
@@ -115,7 +115,7 @@ The available area is generated as a convex or non-convex polygon and then tuned
 The oil & gas field is generated inside a larger context square centered on the unit square. It is also tuned using **uniform scaling** so that its intersection with the unit square matches the requested target percentage.
 
 ### Visualization
-Plots only show the `1 x 1` solution space, even though the oil & gas polygon may extend well outside it.
+The plotting extent can be controlled using the `hub_outer_bound` parameter; however, oil and gas polygons may extend significantly beyond this boundary.
 
 ## example
 

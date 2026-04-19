@@ -150,7 +150,7 @@ def make_initial_population(evaluator, pop_size: int, seed: int = 2026):
 
 def run_nsga2(
     evaluator,
-    n_eval: int = 500,
+    n_eval: int = 5000,
     pop_size: int = 50,
     seed: int = 2026,
     save_csv: bool = True,
