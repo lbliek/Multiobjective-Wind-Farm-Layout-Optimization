@@ -107,7 +107,10 @@ def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInst
     target_reservoir = float(config.target_reservoir_coverage_percent) / 100.0
     tol_reservoir = float(config.reservoir_tolerance_percent) / 100.0
 
-    target_each = target_reservoir / int(config.n_reservoirs)
+    if int(config.n_reservoirs==0 or target_reservoir == 0):
+        target_each = 0
+    else:
+        target_each = target_reservoir / int(config.n_reservoirs)
 
     problems: Dict[int, ProblemInstance] = {}
     attempts = 0
