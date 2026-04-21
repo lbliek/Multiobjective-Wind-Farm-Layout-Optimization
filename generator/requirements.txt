@@ -1,0 +1,10 @@
+# problem generator
+numpy
+matplotlib
+shapely
+scipy
+xgboost
+
+# optimisation methods
+pandas
+pymoo
