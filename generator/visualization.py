@@ -55,6 +55,14 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
             c = visible_part.centroid
             ax.text(c.x, c.y, f"R{i}", ha="center", va="center", fontsize=10)
 
+    # Hub
+    if hub is not None:
+        hub = np.asarray(hub, dtype=float).reshape(-1)
+        if hub.shape[0] != 2:
+            raise ValueError("hub must be a 2D coordinate like [hub_x, hub_y].")
+
+        ax.scatter(hub[0], hub[1], s=120, marker="s", color="red", label="Hub")
+        ax.text(hub[0] + 0.015, hub[1] + 0.015, "Hub", fontsize=10)
     # Turbine locations
     if x is not None:
         x = np.asarray(x, dtype=float).reshape(-1)
@@ -71,14 +79,7 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
         for i, (tx, ty) in enumerate(coords, start=1):
             ax.text(tx + 0.015, ty + 0.015, f"T{i}", fontsize=10)
 
-        # Hub
-        if hub is not None:
-            hub = np.asarray(hub, dtype=float).reshape(-1)
-            if hub.shape[0] != 2:
-                raise ValueError("hub must be a 2D coordinate like [hub_x, hub_y].")
 
-            ax.scatter(hub[0], hub[1], s=120, marker="s", color="red", label="Hub")
-            ax.text(hub[0] + 0.015, hub[1] + 0.015, "Hub", fontsize=10)
 
             # MST cables
             points = np.vstack([hub.reshape(1, 2), coords])   # point 0 = hub
