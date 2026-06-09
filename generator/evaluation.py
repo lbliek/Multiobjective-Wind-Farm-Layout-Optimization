@@ -1,4 +1,4 @@
-
+### evaluation.py defines how to evaluate one wind farm layout  ###
 
 import pickle
 import sys
@@ -146,6 +146,40 @@ class WindFarmEvaluator:
             n_violate += 1
 
         return int(n_violate)
+    
+    # Constraint 3: turbines and hub should not be too close to reservoir centres/platforms
+    def constraint3(self, x, hub) -> int:
+        coords = self._to_coords(x)
+        hub = self._validate_hub(hub)
+
+        centres_nested = getattr(self.problem, "reservoir_centres", [])
+        radius = float(getattr(self.problem, "reservoir_centre_radius", 0.0))
+
+        if radius <= 0.0 or not centres_nested:
+            return 0
+
+        centres = []
+        for reservoir_centres in centres_nested:
+            for cx, cy in reservoir_centres:
+                centres.append([cx, cy])
+
+        if len(centres) == 0:
+            return 0
+
+        centres = np.asarray(centres, dtype=float)
+
+        n_violate = 0
+
+        # turbine-centre distance violations
+        turbine_dists = cdist(coords, centres)
+        n_violate += int(np.sum(np.any(turbine_dists < radius, axis=1)))
+
+        # hub-centre distance violation
+        hub_dists = cdist(hub.reshape(1, 2), centres)
+        if np.any(hub_dists < radius):
+            n_violate += 1
+
+        return int(n_violate)
 
     # Evaluate all objectives and constraints
     def evaluate(self, x, hub):
@@ -155,4 +189,5 @@ class WindFarmEvaluator:
             "f3": self.objective3(x, hub),
             "g1": self.constraint1(x),
             "g2": self.constraint2(x, hub),
+            "g3": self.constraint3(x, hub),
         }

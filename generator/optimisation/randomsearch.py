@@ -1,64 +1,44 @@
 import numpy as np
 import pandas as pd
 
-
-def sample_solution(problem, n_turbines: int, hub_bounds=(1.0, 1.5), rng=None, max_tries: int = 10000):
-    """
-    Randomly sample one candidate solution.
-
-    Turbines:
-        sampled in [0,1] x [0,1], but must satisfy problem.feasibility_indicator(x, y) == 1
-
-    Hub:
-        sampled in [hub_bounds[0], hub_bounds[1]]^2, and must also satisfy
-        problem.feasibility_indicator(hx, hy) == 1
-
-    Returns
-    -------
-    x : np.ndarray
-        Turbine decision vector in the form [x1, x2, ..., y1, y2, ...].
-    hub : list[float]
-        Hub coordinate [hub_x, hub_y].
-    """
+def sample_solution(problem, n_turbines: int, rng=None):
     if rng is None:
         rng = np.random.default_rng()
 
     turbine_coords = []
 
-    # sample turbines
+    # sample turbines only in [0,1] x [0,1]
     for _ in range(n_turbines):
-        accepted = False
-        for _ in range(max_tries):
-            xi = rng.uniform(0.0, 1.0)
-            yi = rng.uniform(0.0, 1.0)
-
-            if problem.feasibility_turbine(xi, yi) == 1:
-                turbine_coords.append((xi, yi))
-                accepted = True
-                break
-
-        if not accepted:
-            raise RuntimeError("Failed to sample a feasible turbine location within max_tries.")
+        xi = rng.uniform(0.0, 1.0)
+        yi = rng.uniform(0.0, 1.0)
+        turbine_coords.append((xi, yi))
 
     xs = [p[0] for p in turbine_coords]
     ys = [p[1] for p in turbine_coords]
     x = np.array(xs + ys, dtype=float)
 
-    # sample hub in [0, hub_bounds[1]] x [0, hub_bounds[1]], but outside [0,1] x [0,1]
-    accepted = False
-    for _ in range(max_tries):
-        hx = rng.uniform(0.0, hub_bounds[1])
-        hy = rng.uniform(0.0, hub_bounds[1])
+    # sample hub uniformly from [0, hub_outer_bound]^2 \ [0,1]^2
+    hub_outer_bound = problem.hub_outer_bound
 
-        outside_unit_square = (hx > 1.0) or (hy > 1.0)
+    if hub_outer_bound <= 1.0:
+        raise ValueError("hub_outer_bound must be larger than 1.0.")
 
-        if outside_unit_square and problem.feasibility_hub(hx, hy) == 1:
-            hub = [float(hx), float(hy)]
-            accepted = True
-            break
+    # Region A: top region [0,1] x [1,hub_outer_bound]
+    area_top = 1.0 * (hub_outer_bound - 1.0)
 
-    if not accepted:
-        raise RuntimeError("Failed to sample a feasible hub location within max_tries.")
+    # Region B: right region [1,hub_outer_bound] x [0,hub_outer_bound]
+    area_right = (hub_outer_bound - 1.0) * hub_outer_bound
+
+    prob_top = area_top / (area_top + area_right)
+
+    if rng.random() < prob_top:
+        hx = rng.uniform(0.0, 1.0)
+        hy = rng.uniform(1.0, hub_outer_bound)
+    else:
+        hx = rng.uniform(1.0, hub_outer_bound)
+        hy = rng.uniform(0.0, hub_outer_bound)
+
+    hub = [float(hx), float(hy)]
 
     return x, hub
 
@@ -66,7 +46,7 @@ def sample_solution(problem, n_turbines: int, hub_bounds=(1.0, 1.5), rng=None, m
 def run_random_search(
     evaluator,
     n_eval: int = 500,
-    hub_bounds=(1.0, 1.5),
+    # hub_bounds=(1.0, 1.5),
     seed: int = 2026,
     save_csv: bool = True,
     csv_path: str = "random_search_results.csv",
@@ -78,7 +58,7 @@ def run_random_search(
         x, hub = sample_solution(
             problem=evaluator.problem,
             n_turbines=evaluator.n_turbines,
-            hub_bounds=hub_bounds,
+            # hub_bounds=hub_bounds,
             rng=rng,
         )
 
@@ -89,8 +69,9 @@ def run_random_search(
         f3 = res["f3"]
         g1 = res["g1"]
         g2 = res["g2"]
+        g3 = res["g3"]
 
-        feasible = int((g1 <= 0) and (g2 <= 0))
+        feasible = int((g1 <= 0) and (g2 <= 0) and (g3 <= 0))   
 
         row = {
             "eval_id": i,
@@ -101,6 +82,7 @@ def run_random_search(
             "f3": float(f3),
             "g1": float(g1),
             "g2": float(g2),
+            "g3": float(g3),
             "feasible": feasible,
         }
         rows.append(row)

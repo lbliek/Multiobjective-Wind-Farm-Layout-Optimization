@@ -42,12 +42,15 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
 
     # Reservoir regions
     view_box = box(0.0, 0.0, len_plot, len_plot)
+
     for i, reservoir in enumerate(problem.reservoirs, start=1):
         rx, ry = reservoir.exterior.xy
+
         if i == 1:
-            ax.fill(rx, ry, alpha=0.30, color="orange", label="Reservoir") #lightcoral
+            ax.fill(rx, ry, alpha=0.30, color="orange", label="Reservoir")
         else:
             ax.fill(rx, ry, alpha=0.30, color="orange")
+
         ax.plot(rx, ry, linewidth=1.8, color="orange")
 
         visible_part = reservoir.intersection(view_box)
@@ -55,14 +58,46 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
             c = visible_part.centroid
             ax.text(c.x, c.y, f"R{i}", ha="center", va="center", fontsize=10)
 
-    # Hub
-    if hub is not None:
-        hub = np.asarray(hub, dtype=float).reshape(-1)
-        if hub.shape[0] != 2:
-            raise ValueError("hub must be a 2D coordinate like [hub_x, hub_y].")
+        # Reservoir centres / platforms
+        if hasattr(problem, "reservoir_centres") and problem.reservoir_centres:
+            if i - 1 < len(problem.reservoir_centres):
+                centres = problem.reservoir_centres[i - 1]
 
-        ax.scatter(hub[0], hub[1], s=120, marker="s", color="red", label="Hub")
-        ax.text(hub[0] + 0.015, hub[1] + 0.015, "Hub", fontsize=10)
+                for j, (cx, cy) in enumerate(centres, start=1):
+                    if 0.0 <= cx <= len_plot and 0.0 <= cy <= len_plot:
+                        label = "platform" if (i == 1 and j == 1) else None
+
+                        ax.scatter(
+                            cx,
+                            cy,
+                            s=90,
+                            marker="^",
+                            color="purple",
+                            label=label,
+                            zorder=5,
+                        )
+
+                        ax.text(
+                            cx + 0.015,
+                            cy + 0.015,
+                            f"P{i}.{j}",
+                            fontsize=9,
+                            color="purple",
+                        )
+
+                        # Optional: draw radius circle
+                        if hasattr(problem, "reservoir_centre_radius"):
+                            circle = plt.Circle(
+                                (cx, cy),
+                                problem.reservoir_centre_radius,
+                                fill=False,
+                                color="purple",
+                                linestyle="--",
+                                linewidth=1.0,
+                                alpha=0.7,
+                            )
+                            ax.add_patch(circle)
+
     # Turbine locations
     if x is not None:
         x = np.asarray(x, dtype=float).reshape(-1)
@@ -79,7 +114,14 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
         for i, (tx, ty) in enumerate(coords, start=1):
             ax.text(tx + 0.015, ty + 0.015, f"T{i}", fontsize=10)
 
+        # Hub
+        if hub is not None:
+            hub = np.asarray(hub, dtype=float).reshape(-1)
+            if hub.shape[0] != 2:
+                raise ValueError("substation must be a 2D coordinate like [sub_x, sub_y].")
 
+            ax.scatter(hub[0], hub[1], s=120, marker="s", color="red", label="Substation")
+            ax.text(hub[0] + 0.015, hub[1] + 0.015, "S", fontsize=10)
 
             # MST cables
             points = np.vstack([hub.reshape(1, 2), coords])   # point 0 = hub

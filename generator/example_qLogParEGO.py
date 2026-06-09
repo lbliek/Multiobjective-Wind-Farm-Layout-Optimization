@@ -1,7 +1,7 @@
 from config import GeneratorConfig
 from generator import generate_problem_instances
 from evaluation import WindFarmEvaluator
-from optimisation.NSGA2 import run_nsga2
+from optimisation.qLogNParEGO import run_qlognparego
 
 
 problem_seed = 1
@@ -27,14 +27,14 @@ evaluator = WindFarmEvaluator(
     n_turbines=5,
 )
 
-df, feas, res = run_nsga2(
+df, feas, model = run_qlognparego(
     evaluator,
     n_eval=500,
-    pop_size=50,
+    n_initial=50,
     seed=algorithm_seed,
     save_csv=True,
-    csv_path=f"results/nsga2_{problem_seed}_{algorithm_seed}.csv",
+    csv_path=f"results/qlognparego_{problem_seed}_{algorithm_seed}.csv",
 )
 
-print("\nTop 5 feasible solutions (by f1):")
-print(feas.sort_values("f1", ascending=True).head())
+print("\nTop 5 feasible solutions by f1:")
+print(feas.sort_values("f1", ascending=False).head())

@@ -1,16 +1,15 @@
 from config import GeneratorConfig
 from generator import generate_problem_instances
-from visualization import plot_problem
-
 from evaluation import WindFarmEvaluator
+from optimisation.randomsearch import run_random_search
 
 
 problem_seed = 1
-
+algorithm_seed = 2026
 
 config = GeneratorConfig(
     n_designs=3,
-    seed=problem_seed,
+    seed=1,
     n_reservoirs=3,
     context_side=3,
     target_feasible_coverage_percent=95.0,
@@ -18,21 +17,23 @@ config = GeneratorConfig(
     # reservoir_coverage_percent=[10.0, 15.0, 7.0, 3.5, 5.5], # assign different coverage percentages to reservoirs
     max_reservoir_attempts=2000,
 )
-
 problems = generate_problem_instances(config)
 problem_1 = problems[1]
 
+
 evaluator = WindFarmEvaluator(problem_1, ensemble_file="Ensemble.pkl", n_turbines=5)
 
-# candidate solution(locations of turbines and the hub)
-hub = [1.15, 1.35]
-x = [0.87601546, 0.30708387, 0.95377465, 0.57068488, 0.51457379, 
-     0.53644864, 0.76385136, 0.91770092, 0.67833953, 0.06152623]
 
-print(evaluator.evaluate(x, hub))
 
-# problem plot
-plot_problem(problem_1, len_plot=2, title="Toy problem_1", path=f"results/problem_1.png")
+df, feas = run_random_search(
+    evaluator,
+    n_eval=500,  
+    seed=algorithm_seed,
+    save_csv=True,
+    csv_path=f"results/random_search_{problem_seed}_{algorithm_seed}.csv",
+)
 
-# problem and solution plot
-plot_problem(problem_1, x=x, hub=hub, len_plot=2, evaluator=evaluator, title="Solution_test", path=f"results/Solution_test.png")
+
+
+print("\nTop 5 feasible solutions (by f1):")
+print(feas.sort_values("f1", ascending=False).head())
