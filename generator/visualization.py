@@ -65,7 +65,7 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
 
                 for j, (cx, cy) in enumerate(centres, start=1):
                     if 0.0 <= cx <= len_plot and 0.0 <= cy <= len_plot:
-                        label = "platform" if (i == 1 and j == 1) else None
+                        label = "Platform" if (i == 1 and j == 1) else None
 
                         ax.scatter(
                             cx,
@@ -110,7 +110,8 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
         ys = x[n_turbines:]
         coords = np.column_stack((xs, ys))
 
-        ax.scatter(coords[:, 0], coords[:, 1], s=80, marker="o", color="blue", label="Turbines")
+  
+        ax.scatter(coords[:, 0], coords[:, 1], s=250, marker="1", color="blue", label="Turbines")
         for i, (tx, ty) in enumerate(coords, start=1):
             ax.text(tx + 0.015, ty + 0.015, f"T{i}", fontsize=10)
 
