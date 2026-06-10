@@ -33,11 +33,11 @@ config = GeneratorConfig(
 
 # CSV_PATH = f"results/random_search_{problem_seed}_{algorithm_seed}.csv"
 
-# CSV_PATH = f"results/nsga2_{problem_seed}_{algorithm_seed}.csv"
+CSV_PATH = f"results/nsga2_{problem_seed}_{algorithm_seed}.csv"
 
 # CSV_PATH = f"results/qlognehvi_{problem_seed}_{algorithm_seed}.csv"
 
-CSV_PATH = f"results/qlognparego_{problem_seed}_{algorithm_seed}.csv"
+# CSV_PATH = f"results/qlognparego_{problem_seed}_{algorithm_seed}.csv"
 
 problems = generate_problem_instances(config)
 
@@ -97,15 +97,15 @@ plot_problem(
     len_plot=2,
     evaluator=evaluator,
     # title=f"random_search_{problem_seed}_{algorithm_seed}",
-    # title=f"nsga2_{problem_seed}_{algorithm_seed}",
+    title=f"nsga2_{problem_seed}_{algorithm_seed}",
     # title=f"qlognehvi_{problem_seed}_{algorithm_seed}",
-    title=f"qlognparego_{problem_seed}_{algorithm_seed}",
+    # title=f"qlognparego_{problem_seed}_{algorithm_seed}",
 
 
     # path=f"results/random_search_{problem_seed}_{algorithm_seed}.png"
-    # path=f"results/nsga2_{problem_seed}_{algorithm_seed}.png"
+    path=f"results/nsga2_{problem_seed}_{algorithm_seed}.png"
     # path=f"results/qlognehvi_{problem_seed}_{algorithm_seed}.png"
-    path=f"results/qlognparego_{problem_seed}_{algorithm_seed}.png"
+    # path=f"results/qlognparego_{problem_seed}_{algorithm_seed}.png"
 
 
 )
