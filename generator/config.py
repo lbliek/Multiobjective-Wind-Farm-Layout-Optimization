@@ -65,9 +65,9 @@ class GeneratorConfig:
 
     # Target coverage percentage for each reservoir.
     # Can be:
-    # - a single float, e.g. 5.0 means every reservoir covers about 5%
+    # - a single float, e.g. 10.0 means every reservoir covers about 5%
     # - a list, e.g. [5.0, 8.0, 3.0] means each reservoir has its own target coverage
-    reservoir_coverage_percent: Union[float, List[float]] = 5.0
+    reservoir_coverage_percent: Union[float, List[float]] = 10.0
 
     # Maximum attempts for placing each reservoir without overlap.
     max_reservoir_attempts: int = 2000
@@ -80,16 +80,18 @@ class GeneratorConfig:
 
 
     # ---------- Reservoir centre / platform ----------
-    # Decide number of centres by full reservoir polygon area.
+    # Decide number of centres by full reservoir polygon area. 
+    # Reservoir area thresholds in normalized space (unit square area = 1.0), e.g. (0.2, 0.5).
     # If reservoir.area <= first threshold: 1 centre
     # If reservoir.area <= second threshold: 2 centres
     # Otherwise: 3 centres
     reservoir_centre_area_thresholds: tuple[float, float] = (0.2, 0.5)
 
-    # Radius around each reservoir centre/platform.
+    # Radius around each reservoir centre/platform.(It is a normalized distance, eg 0.1)
     # This will be used later as a constraint distance.
     reservoir_centre_radius: float = 0.1
 
+    # Random sampling continues until the target number of interior points is obtained or the maximum number of attempts is reached.
     # Number of valid interior sample points used for KMeans.
     reservoir_centre_n_samples: int = 1000
 

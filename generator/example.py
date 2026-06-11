@@ -14,8 +14,8 @@ config = GeneratorConfig(
     n_reservoirs=3,
     context_side=3,
     target_feasible_coverage_percent=95.0,
-    reservoir_coverage_percent=10.0,   # assign 5% coverage percentage to all reservoirs
-    # reservoir_coverage_percent=[10.0, 15.0, 7.0, 3.5, 5.5], # assign different coverage percentages to reservoirs
+    reservoir_coverage_percent=10.0,   # assign 10% coverage percentage to all reservoirs
+    # reservoir_coverage_percent=[10.0, 15.0, 5.5], # assign different 10%, 15%, 5.5% coverage percentages to reservoirs
     max_reservoir_attempts=2000,
 )
 

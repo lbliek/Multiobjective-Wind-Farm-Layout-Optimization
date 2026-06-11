@@ -37,4 +37,4 @@ df, feas, model = run_qlognehvi(
 )
 
 print("\nTop 5 feasible solutions by f1:")
-print(feas.sort_values("f1", ascending=False).head())
+print(feas.sort_values("f1", ascending=True).head())
