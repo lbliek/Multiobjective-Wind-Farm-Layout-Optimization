@@ -68,8 +68,6 @@ class ProblemInstance:
         return int(in_solution and in_feasible and (not in_reservoir))
 
 
-
-
     def feasibility_hub(self, x: float, y: float) -> int:
         """
         Return 1 if the point is:

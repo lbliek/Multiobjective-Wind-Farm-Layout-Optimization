@@ -40,14 +40,20 @@ def random_feasible_polygon_inside_unit(
     Generate an initial available-area polygon inside the unit square.
     It is later tuned by uniform scaling to meet the requested coverage target.
     """
+
+    # Minimum and maximum number of vertices for the available area polygon. 
     n_vertices = int(rng.integers(config.feasible_min_vertices, config.feasible_max_vertices + 1))
+
+    # Margin used when sampling the initial center of the available area polygon.
     margin = float(config.feasible_center_margin)
+
     mode = str(config.feasible_mode).lower()
 
     cx = rng.uniform(margin, 1.0 - margin)
     cy = rng.uniform(margin, 1.0 - margin)
-
-    if mode == "nonconvex":
+    
+    # general polygon(nonconvex)
+    if mode == "nonconvex": 
         poly = random_star_polygon(
             n_vertices=n_vertices,
             rng=rng,
@@ -56,6 +62,7 @@ def random_feasible_polygon_inside_unit(
             r_max=float(config.feasible_r_max),
         )
     elif mode == "convex":
+    # convex_hull    
         pts = rng.uniform(margin, 1.0 - margin, size=(n_vertices * 4, 2))
         poly = ensure_valid_polygon(Polygon(pts).convex_hull)
     else:
@@ -89,6 +96,7 @@ def random_reservoir_polygon_in_context(
     cx = rng.uniform(minx, maxx)
     cy = rng.uniform(miny, maxy)
 
+    # call the same function 'random_star_polygon' to generate polygons  
     return random_star_polygon(
         n_vertices=n_vertices,
         rng=rng,
@@ -185,6 +193,7 @@ def sample_points_inside_polygon(
     if polygon.is_empty:
         raise ValueError("Cannot sample from an empty polygon.")
 
+    # define a bounding box for sampling 
     minx, miny, maxx, maxy = polygon.bounds
 
     points = []
@@ -195,11 +204,13 @@ def sample_points_inside_polygon(
 
         x = rng.uniform(minx, maxx)
         y = rng.uniform(miny, maxy)
-
+        
+        # drop it if a point is outside the reservoir
         if polygon.contains(Point(x, y)):
             points.append([x, y])
 
     if len(points) == 0:
+        # make sure to return a point inside the reservoir
         rp = polygon.representative_point()
         return np.array([[float(rp.x), float(rp.y)]], dtype=float)
 
@@ -268,7 +279,8 @@ def generate_reservoir_centres(
 
 def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInstance]:
     """
-    Generate deterministic problem instances.
+    Generate multiple valid problem instances by creating feasible regions, 
+    reservoirs, and reservoir centres according to the specified configuration.
 
     Parameters
     ----------

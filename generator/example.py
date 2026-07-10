@@ -32,7 +32,7 @@ x = [0.87601546, 0.30708387, 0.95377465, 0.57068488, 0.51457379,
 print(evaluator.evaluate(x, hub))
 
 # problem plot
-plot_problem(problem_1, len_plot=2, title="Toy problem_1", path=f"results/problem_1.png")
+plot_problem(problem_1, len_plot=20, title="Toy problem_1", path=f"results/problem_1.png")
 
 # problem and solution plot
-plot_problem(problem_1, x=x, hub=hub, len_plot=2, evaluator=evaluator, title="Solution_test", path=f"results/Solution_test.png")
+plot_problem(problem_1, x=x, hub=hub, len_plot=20, evaluator=evaluator, title="Solution_test", path=f"results/Solution_test.png")

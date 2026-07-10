@@ -10,8 +10,8 @@ from geometry import UNIT_SQUARE
 
 def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title: str = "Wind farm problem", path="results/chosen_layout.png") -> None:
     """
-    Plot the 1x1 solution space, feasible region, reservoir regions,
-    optionally turbine locations, and optionally bird group.
+    Plot the 1x1 solution space, feasible region, reservoir regions, Reservoir centres
+    optionally turbine locations, hub locations and  bird group.
 
     Parameters
     ----------

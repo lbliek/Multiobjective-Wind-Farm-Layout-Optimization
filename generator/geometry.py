@@ -31,7 +31,7 @@ def ensure_valid_polygon(poly: Polygon) -> Polygon:
 
 def coverage_in_unit_square(poly: Polygon) -> float:
     """
-    Coverage = area(poly ∩ unit_square). The unit-square area equals 1.
+    # Calculate the polygon coverage within the unit square.
     """
     if poly.is_empty:
         return 0.0
@@ -46,7 +46,7 @@ def scale_about_centroid(poly: Polygon, scale_factor: float) -> Polygon:
 
 def tune_polygon_uniform_scale_to_coverage(
     poly: Polygon,
-    target_cov: float,
+    target_cov: float, # targert coverage
     tol: float,
     interval_tol: float = 1e-12,
     max_scale: float = 1e6,
@@ -70,19 +70,24 @@ def tune_polygon_uniform_scale_to_coverage(
     s_low = 0.0
     s_high = 1.0
 
+    # scaled polygon
     tuned_high = ensure_valid_polygon(scale_about_centroid(poly, s_high))
+    # current coverage
     cov_high = coverage_in_unit_square(tuned_high)
 
+    # return result if the error is accepted 
     if abs(cov_high - target_cov) <= tol:
         return tuned_high, cov_high, s_high
-
+    
+    # find a coverage upper bound(scaler_high) larger than targeted one
     while cov_high < target_cov:
         s_high *= 2.0
         if s_high > max_scale:
             raise RuntimeError("Failed to bracket target coverage. Adjust generation parameters.")
         tuned_high = ensure_valid_polygon(scale_about_centroid(poly, s_high))
         cov_high = coverage_in_unit_square(tuned_high)
-
+    
+    # use Binary Search to find a proper scaler ratio
     while True:
         s_mid = 0.5 * (s_low + s_high)
         tuned_mid = ensure_valid_polygon(scale_about_centroid(poly, s_mid))

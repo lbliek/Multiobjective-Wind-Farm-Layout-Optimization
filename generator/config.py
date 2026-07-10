@@ -89,7 +89,7 @@ class GeneratorConfig:
 
     # Radius around each reservoir centre/platform.(It is a normalized distance, eg 0.1)
     # This will be used later as a constraint distance.
-    reservoir_centre_radius: float = 0.1
+    reservoir_centre_radius: float = 18520/(333.33*5)
 
     # Random sampling continues until the target number of interior points is obtained or the maximum number of attempts is reached.
     # Number of valid interior sample points used for KMeans.
