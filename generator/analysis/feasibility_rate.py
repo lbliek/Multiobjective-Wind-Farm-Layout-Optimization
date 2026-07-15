@@ -7,7 +7,7 @@ files = {
     "Random Search": "random_search_1_2026.csv",
     "NSGA2": "nsga2_1_2026.csv",
     "EHVI": "qlognehvi_1_2026.csv",
-    "ParEGO": "qlognparego_1_2026.csv",
+    # "ParEGO": "qlognparego_1_2026.csv",
 }
 
 for name, filename in files.items():

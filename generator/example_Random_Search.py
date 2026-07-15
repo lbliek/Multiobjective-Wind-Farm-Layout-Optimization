@@ -18,10 +18,10 @@ config = GeneratorConfig(
     max_reservoir_attempts=2000,
 )
 problems = generate_problem_instances(config)
-problem_1 = problems[1]
+problem = problems[3]
 
 
-evaluator = WindFarmEvaluator(problem_1, ensemble_file="Ensemble.pkl", n_turbines=5)
+evaluator = WindFarmEvaluator(problem, ensemble_file="Ensemble.pkl", n_turbines=5)
 
 
 

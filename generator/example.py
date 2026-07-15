@@ -20,9 +20,9 @@ config = GeneratorConfig(
 )
 
 problems = generate_problem_instances(config)
-problem_1 = problems[1]
+problem = problems[3]
 
-evaluator = WindFarmEvaluator(problem_1, ensemble_file="Ensemble.pkl", n_turbines=5)
+evaluator = WindFarmEvaluator(problem, ensemble_file="Ensemble.pkl", n_turbines=5)
 
 # candidate solution(locations of turbines and the hub)
 hub = [1.15, 1.35]
@@ -31,8 +31,11 @@ x = [0.87601546, 0.30708387, 0.95377465, 0.57068488, 0.51457379,
 
 print(evaluator.evaluate(x, hub))
 
-# problem plot
-plot_problem(problem_1, len_plot=20, title="Toy problem_1", path=f"results/problem_1.png")
+# # problem plot
+# plot_problem(problem, len_plot=10, title="Toy problem", path=f"results/problem.png")
 
 # problem and solution plot
-plot_problem(problem_1, x=x, hub=hub, len_plot=20, evaluator=evaluator, title="Solution_test", path=f"results/Solution_test.png")
+# plot_problem(problem, x=x, hub=hub, len_plot=12, evaluator=evaluator, title="Solution_test", path=f"results/Solution_test.png")
+
+# problem and solution plot
+plot_problem(problem, x=x, hub=hub, len_plot=10, evaluator=evaluator, title="Solution_test", path=f"results/Solution_test.png")

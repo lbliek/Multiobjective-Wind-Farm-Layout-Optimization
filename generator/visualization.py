@@ -64,6 +64,7 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
                 centres = problem.reservoir_centres[i - 1]
 
                 for j, (cx, cy) in enumerate(centres, start=1):
+
                     if 0.0 <= cx <= len_plot and 0.0 <= cy <= len_plot:
                         label = "Platform" if (i == 1 and j == 1) else None
 
@@ -98,6 +99,61 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
                             )
                             ax.add_patch(circle)
 
+#########
+    # External reservoir
+    external_reservoir = getattr(problem, "external_reservoir", None)
+
+    if external_reservoir is not None and not external_reservoir.is_empty:
+        ex, ey = external_reservoir.exterior.xy
+
+        ax.fill(ex, ey, alpha=0.22, color="brown", label="External reservoir")
+        ax.plot(ex, ey, linewidth=1.8, color="brown")
+
+        visible_part = external_reservoir.intersection(view_box)
+        if not visible_part.is_empty:
+            c = visible_part.centroid
+            ax.text(c.x, c.y, "ER", ha="center", va="center", fontsize=10)
+
+        external_centres = getattr(problem, "external_reservoir_centres", [])
+
+        for j, (cx, cy) in enumerate(external_centres, start=1):
+            if True:
+            # if 0.0 <= cx <= len_plot and 0.0 <= cy <= len_plot:
+
+                if 0.0 <= cx <= len_plot and 0.0 <= cy <= len_plot:
+                    label = "External platform" if j == 1 else None
+
+                    ax.scatter(
+                        cx,
+                        cy,
+                        s=90,
+                        marker="^",
+                        color="purple",
+                        label=label,
+                        zorder=5,
+                    )
+
+                    ax.text(
+                        cx + 0.015,
+                        cy + 0.015,
+                        f"EP{j}",
+                        fontsize=9,
+                        color="purple",
+                    )
+
+                if hasattr(problem, "reservoir_centre_radius"):
+                    circle = plt.Circle(
+                        (cx, cy),
+                        problem.reservoir_centre_radius,
+                        fill=False,
+                        color="purple",
+                        linestyle="--",
+                        linewidth=1.0,
+                        alpha=0.7,
+                    )
+                    ax.add_patch(circle)
+
+#######
     # Turbine locations
     if x is not None:
         x = np.asarray(x, dtype=float).reshape(-1)

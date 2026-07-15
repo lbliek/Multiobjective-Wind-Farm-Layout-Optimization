@@ -52,7 +52,7 @@ class GeneratorConfig:
     # Number of reservoirs. Must be between 0 and 5.
     n_reservoirs: int = 3
 
-    # Side length of the larger context square centered on the solution space.
+    # Side length of the context square for reservoirs generation.
     context_side: float = 25.0
 
     # Number of vertices for the oil & gas polygon.
@@ -85,11 +85,11 @@ class GeneratorConfig:
     # If reservoir.area <= first threshold: 1 centre
     # If reservoir.area <= second threshold: 2 centres
     # Otherwise: 3 centres
-    reservoir_centre_area_thresholds: tuple[float, float] = (0.2, 0.5)
+    reservoir_centre_area_thresholds: tuple[float, float] = (1.5, 5)
 
     # Radius around each reservoir centre/platform.(It is a normalized distance, eg 0.1)
     # This will be used later as a constraint distance.
-    reservoir_centre_radius: float = 18520/(333.33*5)
+    reservoir_centre_radius: float = 9260/(333.33*5)
 
     # Random sampling continues until the target number of interior points is obtained or the maximum number of attempts is reached.
     # Number of valid interior sample points used for KMeans.
@@ -97,3 +97,27 @@ class GeneratorConfig:
 
     # Maximum random attempts when sampling points inside one reservoir.
     reservoir_centre_max_sampling_attempts: int = 20000
+
+
+
+
+
+
+    ############
+    # ---------- External reservoir ----------
+    external_reservoir_center: tuple[float, float] = (5.1, 5.1)
+
+    external_reservoir_min_vertices: int = 8
+    external_reservoir_max_vertices: int = 12
+
+    # Target random area range for the external reservoir.
+    external_reservoir_area_min: float = 1.5
+    external_reservoir_area_max: float = 10.0
+
+    # Initial shape radius range before area scaling.
+    external_reservoir_r_min: float = 0.4
+    external_reservoir_r_max: float = 2.0
+
+    max_external_reservoir_attempts: int = 2000
+
+    ###########

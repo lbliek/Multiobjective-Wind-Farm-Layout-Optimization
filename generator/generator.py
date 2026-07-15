@@ -5,6 +5,9 @@ from geometry import (
     UNIT_SQUARE,
     ensure_valid_polygon,
     make_context_square,
+    ########
+    scale_about_centroid,
+    ##########
     tune_polygon_uniform_scale_to_coverage,
 )
 from instance import ProblemInstance
@@ -105,6 +108,44 @@ def random_reservoir_polygon_in_context(
         r_max=float(config.reservoir_r_max),
     )
 
+########################
+def random_external_reservoir_polygon(
+    config: GeneratorConfig,
+    rng: np.random.Generator,
+) -> Polygon:
+    """
+    Generate one external reservoir around a fixed configured center,
+    then scale it to a random target area.
+    """
+    n_vertices = int(
+        rng.integers(
+            config.external_reservoir_min_vertices,
+            config.external_reservoir_max_vertices + 1,
+        )
+    )
+
+    raw = random_star_polygon(
+        n_vertices=n_vertices,
+        rng=rng,
+        center=tuple(config.external_reservoir_center),
+        r_min=float(config.external_reservoir_r_min),
+        r_max=float(config.external_reservoir_r_max),
+    )
+
+    raw = ensure_valid_polygon(raw)
+
+    if raw.is_empty or raw.area <= 1e-12:
+        return Polygon()
+
+    target_area = rng.uniform(
+        float(config.external_reservoir_area_min),
+        float(config.external_reservoir_area_max),
+    )
+
+    scale_factor = np.sqrt(target_area / float(raw.area))
+    return ensure_valid_polygon(scale_about_centroid(raw, scale_factor))
+
+########################
 
 def get_reservoir_coverage_targets(config: GeneratorConfig) -> List[float]:
     """
@@ -353,11 +394,15 @@ def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInst
                 if overlaps_existing_reservoirs(reservoir, reservoirs):
                     continue
 
-                centres = generate_reservoir_centres(
-                    reservoir=reservoir,
-                    config=config,
-                    rng=rng,
-                )
+###########################
+                # centres = generate_reservoir_centres(
+                #     reservoir=reservoir,
+                #     config=config,
+                #     rng=rng,
+                # )
+                
+                centres = []
+###########################
 
                 reservoirs.append(reservoir)
                 reservoir_covs.append(reservoir_cov)
@@ -377,6 +422,33 @@ def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInst
 
         idx = len(problems) + 1
 
+        ################
+        external_reservoir = None
+        external_reservoir_centres = []
+
+        for _ in range(int(config.max_external_reservoir_attempts)):
+            candidate = random_external_reservoir_polygon(config, rng)
+
+            if candidate.is_empty:
+                continue
+
+            if candidate.intersection(UNIT_SQUARE).area > 1e-12:
+                continue
+
+            if overlaps_existing_reservoirs(candidate, reservoirs):
+                continue
+
+            external_reservoir = candidate
+            external_reservoir_centres = generate_reservoir_centres(
+                reservoir=external_reservoir,
+                config=config,
+                rng=rng,
+            )
+            break
+
+        if external_reservoir is None:
+            continue
+        ################
 
         problems[idx] = ProblemInstance(
             feasible=feasible,
@@ -384,6 +456,10 @@ def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInst
             feasible_cov=feasible_cov,
             reservoir_covs=reservoir_covs,
             reservoir_centres=reservoir_centres,
+            ##############
+            external_reservoir=external_reservoir,
+            external_reservoir_centres=external_reservoir_centres,
+            ##########
             reservoir_centre_radius=float(config.reservoir_centre_radius),
             allow_boundary=bool(config.allow_boundary),
             hub_outer_bound=float(config.hub_outer_bound),

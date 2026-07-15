@@ -31,20 +31,20 @@ config = GeneratorConfig(
     max_reservoir_attempts=2000,
 )
 
-# CSV_PATH = f"results/random_search_{problem_seed}_{algorithm_seed}.csv"
+CSV_PATH = f"results/random_search_{problem_seed}_{algorithm_seed}.csv"
 
 # CSV_PATH = f"results/nsga2_{problem_seed}_{algorithm_seed}.csv"
 
 # CSV_PATH = f"results/qlognehvi_{problem_seed}_{algorithm_seed}.csv"
 
-CSV_PATH = f"results/qlognparego_{problem_seed}_{algorithm_seed}.csv"
+# CSV_PATH = f"results/qlognparego_{problem_seed}_{algorithm_seed}.csv"
 
 problems = generate_problem_instances(config)
 
-problem_1 = problems[1]
+problem = problems[3]
 
 
-evaluator = WindFarmEvaluator(problem_1, ensemble_file="Ensemble.pkl", n_turbines=5)
+evaluator = WindFarmEvaluator(problem, ensemble_file="Ensemble.pkl", n_turbines=5)
 
 
 
@@ -75,7 +75,7 @@ row = cur_feas.iloc[first_front_idx[pick_id]]
 
 print("Chosen eval_id:", row["eval_id"])
 print("f values:", row[["f1", "f2", "f3"]].to_dict())
-print("g values:", row[["g1", "g2"]].to_dict())
+print("g values:", row[["g1", "g2", "g3"]].to_dict())
 
 
 # Recover x and hub
@@ -90,22 +90,15 @@ print("hub =", hub)
 
 
 plot_problem(
-    problem_1,
+    problem,
     
     x=x,
     hub=hub,
     len_plot=2,
     evaluator=evaluator,
-    # title=f"random_search_{problem_seed}_{algorithm_seed}",
-    # title=f"nsga2_{problem_seed}_{algorithm_seed}",
-    # title=f"qlognehvi_{problem_seed}_{algorithm_seed}",
-    title=f"qlognparego_{problem_seed}_{algorithm_seed}",
+    title=f"random_search_{problem_seed}_{algorithm_seed}",
+    path=f"results/random_search_{problem_seed}_{algorithm_seed}.png"
 
-
-    # path=f"results/random_search_{problem_seed}_{algorithm_seed}.png"
-    # path=f"results/nsga2_{problem_seed}_{algorithm_seed}.png"
-    # path=f"results/qlognehvi_{problem_seed}_{algorithm_seed}.png"
-    path=f"results/qlognparego_{problem_seed}_{algorithm_seed}.png"
 
 
 )
