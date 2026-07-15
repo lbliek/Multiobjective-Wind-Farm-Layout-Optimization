@@ -108,7 +108,7 @@ def random_reservoir_polygon_in_context(
         r_max=float(config.reservoir_r_max),
     )
 
-########################
+
 def random_external_reservoir_polygon(
     config: GeneratorConfig,
     rng: np.random.Generator,
@@ -145,7 +145,6 @@ def random_external_reservoir_polygon(
     scale_factor = np.sqrt(target_area / float(raw.area))
     return ensure_valid_polygon(scale_about_centroid(raw, scale_factor))
 
-########################
 
 def get_reservoir_coverage_targets(config: GeneratorConfig) -> List[float]:
     """
@@ -393,16 +392,8 @@ def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInst
 
                 if overlaps_existing_reservoirs(reservoir, reservoirs):
                     continue
-
-###########################
-                # centres = generate_reservoir_centres(
-                #     reservoir=reservoir,
-                #     config=config,
-                #     rng=rng,
-                # )
                 
                 centres = []
-###########################
 
                 reservoirs.append(reservoir)
                 reservoir_covs.append(reservoir_cov)
@@ -422,7 +413,7 @@ def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInst
 
         idx = len(problems) + 1
 
-        ################
+
         external_reservoir = None
         external_reservoir_centres = []
 
@@ -448,7 +439,7 @@ def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInst
 
         if external_reservoir is None:
             continue
-        ################
+
 
         problems[idx] = ProblemInstance(
             feasible=feasible,
@@ -456,10 +447,8 @@ def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInst
             feasible_cov=feasible_cov,
             reservoir_covs=reservoir_covs,
             reservoir_centres=reservoir_centres,
-            ##############
             external_reservoir=external_reservoir,
             external_reservoir_centres=external_reservoir_centres,
-            ##########
             reservoir_centre_radius=float(config.reservoir_centre_radius),
             allow_boundary=bool(config.allow_boundary),
             hub_outer_bound=float(config.hub_outer_bound),

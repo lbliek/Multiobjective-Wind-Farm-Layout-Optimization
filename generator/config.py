@@ -100,11 +100,8 @@ class GeneratorConfig:
 
 
 
-
-
-
-    ############
     # ---------- External reservoir ----------
+
     external_reservoir_center: tuple[float, float] = (5.1, 5.1)
 
     external_reservoir_min_vertices: int = 8
@@ -120,4 +117,3 @@ class GeneratorConfig:
 
     max_external_reservoir_attempts: int = 2000
 
-    ###########

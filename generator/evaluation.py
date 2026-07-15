@@ -163,7 +163,7 @@ class WindFarmEvaluator:
  
     def constraint2(self, x, hub) -> int:
         '''
-        Constraint 2: check the feasibility of turbines and the hub
+        Constraint 2: check the feasibility of turbines and the hub 
         n_violate is the constraint violation
         '''
         coords = self._to_coords(x)
@@ -180,48 +180,8 @@ class WindFarmEvaluator:
 
         return int(n_violate)
     
- 
-    # def constraint3(self, x, hub) -> int:
-    #     '''
-    #     Constraint 3: turbines and hub should not be too close to reservoir centres/platforms
-    #     '''
-    #     coords = self._to_coords(x)
-    #     hub = self._validate_hub(hub)
 
-    #     # get coordinates and radius of reservoir centres 
-    #     centres_nested = getattr(self.problem, "reservoir_centres", [])
-    #     radius = float(getattr(self.problem, "reservoir_centre_radius", 0.0))
 
-    #     if radius <= 0.0 or not centres_nested:
-    #         return 0
-
-    #     centres = []
-    #     for reservoir_centres in centres_nested:
-    #         for cx, cy in reservoir_centres:
-    #             centres.append([cx, cy])
-
-    #     if len(centres) == 0:
-    #         return 0
-
-    #     centres = np.asarray(centres, dtype=float)
-
-    #     n_violate = 0
-
-    #     # turbine-centre distance violations
-    #     turbine_dists = cdist(coords, centres)
-    #     n_violate += int(np.sum(np.any(turbine_dists < radius, axis=1)))
-
-    #     # hub-centre distance violation
-    #     hub_dists = cdist(hub.reshape(1, 2), centres)
-    #     if np.any(hub_dists < radius):
-    #         n_violate += 1
-
-    #     # return int(n_violate)
-    #     #######
-    #     return 0 # not use contraint 3  temporarily
-    #     ########
-
-#####################
     def constraint3(self, x, hub) -> int:
         '''
         Constraint 3: turbines and hub should not be too close to external reservoir platforms
@@ -247,7 +207,7 @@ class WindFarmEvaluator:
             n_violate += 1
 
         return int(n_violate)
-#######################
+
   
     def evaluate(self, x, hub):
         '''

@@ -21,8 +21,8 @@ CSV_PATHS = {
 
 
 
-f_min = np.array([-5.87787781e+01,  1.00000000e-03,  1.46898078e+03], dtype=float)
-f_max = np.array([-1.25478811e+01,  1.00000000e+00,  4.59072239e+03], dtype=float)
+f_min = np.array([-5.77324791e+01,  1.10000000e-02,  1.87497145e+03], dtype=float)
+f_max = np.array([-1.55639257e+01,  1.00000000e+00,  3.77577478e+03], dtype=float)
 
 
 

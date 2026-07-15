@@ -25,21 +25,21 @@ class ProblemInstance:
     allow_boundary: bool = True
     hub_outer_bound: float = 1.5
 
-    #########
+    # external reservoir and its centres
     external_reservoir: object = None
     external_reservoir_centres: list = field(default_factory=list)
 
-    ############
+
 
 
     def __post_init__(self) -> None:
         self.feasible = ensure_valid_polygon(self.feasible)
         self.reservoirs = [ensure_valid_polygon(r) for r in self.reservoirs]
 
-        ###############
+
         if self.external_reservoir is not None:
             self.external_reservoir = ensure_valid_polygon(self.external_reservoir)
-        #############
+
 
     def available_area_indicator(self, x: float, y: float) -> int:
         """

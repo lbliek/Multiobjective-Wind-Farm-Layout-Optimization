@@ -99,7 +99,7 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
                             )
                             ax.add_patch(circle)
 
-#########
+
     # External reservoir
     external_reservoir = getattr(problem, "external_reservoir", None)
 
@@ -153,7 +153,7 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
                     )
                     ax.add_patch(circle)
 
-#######
+
     # Turbine locations
     if x is not None:
         x = np.asarray(x, dtype=float).reshape(-1)
