@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import List, Union
 
 
 @dataclass(frozen=True)
@@ -17,7 +18,7 @@ class GeneratorConfig:
     n_designs: int = 5
 
     # Fixed seed for deterministic generation.
-    seed: int = 7
+    seed: int = 1
 
     # Maximum number of generation attempts.
     max_attempts: int = 60000
@@ -48,10 +49,10 @@ class GeneratorConfig:
     hub_outer_bound: float = 1.5
 
     # ---------- Oil & gas polygon ----------
-    # number of reservoirs
+    # Number of reservoirs. Must be between 0 and 5.
     n_reservoirs: int = 3
 
-    # Side length of the larger context square centered on the solution space.
+    # Side length of the context square for reservoirs generation.
     context_side: float = 25.0
 
     # Number of vertices for the oil & gas polygon.
@@ -62,11 +63,57 @@ class GeneratorConfig:
     reservoir_r_min: float = 0.6
     reservoir_r_max: float = 5.0
 
-    # Target fraction of the 1x1 solution space covered by the oil & gas polygon.
-    target_reservoir_coverage_percent: float = 15.0
+    # Target coverage percentage for each reservoir.
+    # Can be:
+    # - a single float, e.g. 10.0 means every reservoir covers about 5%
+    # - a list, e.g. [5.0, 8.0, 3.0] means each reservoir has its own target coverage
+    reservoir_coverage_percent: Union[float, List[float]] = 10.0
+
+    # Maximum attempts for placing each reservoir without overlap.
+    max_reservoir_attempts: int = 2000
 
     # Allowed deviation from the target oil & gas coverage.
     reservoir_tolerance_percent: float = 1.0
 
     # Whether points on polygon boundaries are treated as inside.
     allow_boundary: bool = True
+
+
+    # ---------- Reservoir centre / platform ----------
+    # Decide number of centres by full reservoir polygon area. 
+    # Reservoir area thresholds in normalized space (unit square area = 1.0), e.g. (0.2, 0.5).
+    # If reservoir.area <= first threshold: 1 centre
+    # If reservoir.area <= second threshold: 2 centres
+    # Otherwise: 3 centres
+    reservoir_centre_area_thresholds: tuple[float, float] = (1.5, 5)
+
+    # Radius around each reservoir centre/platform.(It is a normalized distance, eg 0.1)
+    # This will be used later as a constraint distance.
+    reservoir_centre_radius: float = 9260/(333.33*5)
+
+    # Random sampling continues until the target number of interior points is obtained or the maximum number of attempts is reached.
+    # Number of valid interior sample points used for KMeans.
+    reservoir_centre_n_samples: int = 1000
+
+    # Maximum random attempts when sampling points inside one reservoir.
+    reservoir_centre_max_sampling_attempts: int = 20000
+
+
+
+    # ---------- External reservoir ----------
+
+    external_reservoir_center: tuple[float, float] = (5.1, 5.1)
+
+    external_reservoir_min_vertices: int = 8
+    external_reservoir_max_vertices: int = 12
+
+    # Target random area range for the external reservoir.
+    external_reservoir_area_min: float = 1.5
+    external_reservoir_area_max: float = 10.0
+
+    # Initial shape radius range before area scaling.
+    external_reservoir_r_min: float = 0.4
+    external_reservoir_r_max: float = 2.0
+
+    max_external_reservoir_attempts: int = 2000
+

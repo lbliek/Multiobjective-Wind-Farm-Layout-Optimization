@@ -21,54 +21,50 @@ def decode_solution(candidate, n_turbines):
     return x, hub
 
 
-def sample_solution_nsga2(problem, n_turbines: int, hub_outer_bound=1.5, rng=None, max_tries: int = 10000):
+def sample_solution_nsga2(problem, n_turbines: int, hub_outer_bound=1.5, rng=None):
     """
-    Generate one feasible initial solution for NSGA2.
+    Generate one initial solution for NSGA2.
 
     Turbines:
-        sampled in [0,1] x [0,1], and must satisfy problem.feasibility_turbine(x, y) == 1
+        sampled in [0,1] x [0,1]
 
     Hub:
-        sampled in [0, hub_outer_bound] x [0, hub_outer_bound], and must satisfy
-        problem.feasibility_hub(x, y) == 1
+        sampled uniformly from [0, hub_outer_bound]^2 \ [0,1]^2
     """
     if rng is None:
         rng = np.random.default_rng()
 
     turbine_coords = []
 
-    # sample turbines
+    # sample turbines only in [0,1] x [0,1]
     for _ in range(n_turbines):
-        accepted = False
-        for _ in range(max_tries):
-            xi = rng.uniform(0.0, 1.0)
-            yi = rng.uniform(0.0, 1.0)
-
-            if problem.feasibility_turbine(xi, yi) == 1:
-                turbine_coords.append((xi, yi))
-                accepted = True
-                break
-
-        if not accepted:
-            raise RuntimeError("Failed to sample a feasible turbine location within max_tries.")
+        xi = rng.uniform(0.0, 1.0)
+        yi = rng.uniform(0.0, 1.0)
+        turbine_coords.append((xi, yi))
 
     xs = [p[0] for p in turbine_coords]
     ys = [p[1] for p in turbine_coords]
     x = np.array(xs + ys, dtype=float)
 
-    # sample hub
-    accepted = False
-    for _ in range(max_tries):
-        hx = rng.uniform(0.0, hub_outer_bound)
+    # sample hub uniformly from [0, hub_outer_bound]^2 \ [0,1]^2
+    if hub_outer_bound <= 1.0:
+        raise ValueError("hub_outer_bound must be larger than 1.0.")
+
+    area_top = 1.0 * (hub_outer_bound - 1.0)
+    area_right = (hub_outer_bound - 1.0) * hub_outer_bound
+
+    prob_top = area_top / (area_top + area_right)
+
+    if rng.random() < prob_top:
+        # top region: [0,1] x [1,hub_outer_bound]
+        hx = rng.uniform(0.0, 1.0)
+        hy = rng.uniform(1.0, hub_outer_bound)
+    else:
+        # right region: [1,hub_outer_bound] x [0,hub_outer_bound]
+        hx = rng.uniform(1.0, hub_outer_bound)
         hy = rng.uniform(0.0, hub_outer_bound)
 
-        if problem.feasibility_hub(hx, hy) == 1:
-            hub = [float(hx), float(hy)]
-            accepted = True
-            break
-
-    if not accepted:
-        raise RuntimeError("Failed to sample a feasible hub location within max_tries.")
+    hub = [float(hx), float(hy)]
 
     return x, hub
 
@@ -92,7 +88,7 @@ class NSGA2Problem(ElementwiseProblem):
         super().__init__(
             n_var=2 * n + 2,
             n_obj=3,
-            n_constr=2,
+            n_constr=3,
             xl=xl,
             xu=xu
         )
@@ -102,7 +98,7 @@ class NSGA2Problem(ElementwiseProblem):
         res = self.evaluator.evaluate(x, hub)
 
         out["F"] = [res["f1"], res["f2"], res["f3"]]
-        out["G"] = [res["g1"], res["g2"]]
+        out["G"] = [res["g1"], res["g2"], res["g3"]]
 
 
 class MyCallback(Callback):
@@ -150,7 +146,7 @@ def make_initial_population(evaluator, pop_size: int, seed: int = 2026):
 
 def run_nsga2(
     evaluator,
-    n_eval: int = 5000,
+    n_eval: int = 500,
     pop_size: int = 50,
     seed: int = 2026,
     save_csv: bool = True,
@@ -183,14 +179,15 @@ def run_nsga2(
 
     X_all = np.vstack(callback.X) if len(callback.X) else np.empty((0, n_var))
     F_all = np.vstack(callback.F) if len(callback.F) else np.empty((0, 3))
-    G_all = np.vstack(callback.G) if len(callback.G) else np.empty((0, 2))
+    G_all = np.vstack(callback.G) if len(callback.G) else np.empty((0, 3))
 
     n = min(n_eval, len(X_all))
     X_all, F_all, G_all = X_all[:n], F_all[:n], G_all[:n]
 
     g1 = G_all[:, 0]
     g2 = G_all[:, 1]
-    feasible = ((g1 <= 0) & (g2 <= 0)).astype(int)
+    g3 = G_all[:, 2]
+    feasible = ((g1 <= 0) & (g2 <= 0) & (g3 <= 0)).astype(int)
 
     rows = []
     for i in range(n):
@@ -206,6 +203,7 @@ def run_nsga2(
             "f3": float(F_all[i, 2]),
             "g1": float(g1[i]),
             "g2": float(g2[i]),
+            "g3": float(g3[i]),
             "feasible": int(feasible[i]),
         }
         rows.append(row)

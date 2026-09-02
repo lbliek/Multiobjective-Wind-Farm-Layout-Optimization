@@ -1,7 +1,9 @@
-from dataclasses import dataclass
+
 from geometry import UNIT_SQUARE, ensure_valid_polygon
 from shapely.geometry import Point, box
 
+from dataclasses import dataclass, field
+from shapely.geometry import Polygon
 
 
 @dataclass
@@ -13,12 +15,31 @@ class ProblemInstance:
     reservoirs: list
     feasible_cov: float
     reservoir_covs: list
+
+    # centres/platforms for each reservoir
+    reservoir_centres: list = field(default_factory=list)
+
+    # radius around each centre
+    reservoir_centre_radius: float = 0.08
+
     allow_boundary: bool = True
     hub_outer_bound: float = 1.5
+
+    # external reservoir and its centres
+    external_reservoir: object = None
+    external_reservoir_centres: list = field(default_factory=list)
+
+
+
 
     def __post_init__(self) -> None:
         self.feasible = ensure_valid_polygon(self.feasible)
         self.reservoirs = [ensure_valid_polygon(r) for r in self.reservoirs]
+
+
+        if self.external_reservoir is not None:
+            self.external_reservoir = ensure_valid_polygon(self.external_reservoir)
+
 
     def available_area_indicator(self, x: float, y: float) -> int:
         """
@@ -58,14 +79,11 @@ class ProblemInstance:
         return int(in_solution and in_feasible and (not in_reservoir))
 
 
-
-
     def feasibility_hub(self, x: float, y: float) -> int:
         """
         Return 1 if the point is:
         #- inside the (hub_outer_bound x hub_outer_bound) space,
         - outside 1x1 solution space
-        - inside the available area,
         - outside the oil & gas polygon.
         Otherwise return 0.
         """
@@ -75,17 +93,17 @@ class ProblemInstance:
 
         in_outer_box = HUB_OUTER_BOX.covers(p) if self.allow_boundary else HUB_OUTER_BOX.contains(p)
         in_unit_square = UNIT_SQUARE.covers(p) if self.allow_boundary else UNIT_SQUARE.contains(p)
-        in_feasible = self.feasible.covers(p) if self.allow_boundary else self.feasible.contains(p)
         in_reservoir = any(
             r.covers(p) if self.allow_boundary else r.contains(p)
             for r in self.reservoirs
         )
 
-        return int(in_outer_box and (not in_unit_square) and in_feasible and (not in_reservoir))
+        return int(in_outer_box and (not in_unit_square) and (not in_reservoir))
+   
 
     def check_point(self, x: float, y: float) -> dict:
         """
-        Rich diagnostic version of the feasibility check.
+        Rich diagnostic version of the turbines feasibility check.
         """
         p = Point(float(x), float(y))
 

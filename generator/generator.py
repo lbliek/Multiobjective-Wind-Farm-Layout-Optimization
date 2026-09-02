@@ -1,16 +1,19 @@
-from typing import Dict, Tuple
-
+from typing import Dict, Tuple, List
 import numpy as np
-from shapely.geometry import Polygon
-
 from config import GeneratorConfig
 from geometry import (
     UNIT_SQUARE,
     ensure_valid_polygon,
     make_context_square,
+    ########
+    scale_about_centroid,
+    ##########
     tune_polygon_uniform_scale_to_coverage,
 )
 from instance import ProblemInstance
+from shapely.geometry import Polygon, Point
+from sklearn.cluster import KMeans
+
 
 def random_star_polygon(
     n_vertices: int,
@@ -31,19 +34,29 @@ def random_star_polygon(
 
     return ensure_valid_polygon(Polygon(np.column_stack([xs, ys])))
 
-def random_feasible_polygon_inside_unit(config: GeneratorConfig, rng: np.random.Generator) -> Polygon:
+
+def random_feasible_polygon_inside_unit(
+    config: GeneratorConfig,
+    rng: np.random.Generator,
+) -> Polygon:
     """
     Generate an initial available-area polygon inside the unit square.
     It is later tuned by uniform scaling to meet the requested coverage target.
     """
+
+    # Minimum and maximum number of vertices for the available area polygon. 
     n_vertices = int(rng.integers(config.feasible_min_vertices, config.feasible_max_vertices + 1))
+
+    # Margin used when sampling the initial center of the available area polygon.
     margin = float(config.feasible_center_margin)
+
     mode = str(config.feasible_mode).lower()
 
     cx = rng.uniform(margin, 1.0 - margin)
     cy = rng.uniform(margin, 1.0 - margin)
-
-    if mode == "nonconvex":
+    
+    # general polygon(nonconvex)
+    if mode == "nonconvex": 
         poly = random_star_polygon(
             n_vertices=n_vertices,
             rng=rng,
@@ -52,6 +65,7 @@ def random_feasible_polygon_inside_unit(config: GeneratorConfig, rng: np.random.
             r_max=float(config.feasible_r_max),
         )
     elif mode == "convex":
+    # convex_hull    
         pts = rng.uniform(margin, 1.0 - margin, size=(n_vertices * 4, 2))
         poly = ensure_valid_polygon(Polygon(pts).convex_hull)
     else:
@@ -60,21 +74,32 @@ def random_feasible_polygon_inside_unit(config: GeneratorConfig, rng: np.random.
     if poly.is_empty:
         return Polygon()
 
-    if not UNIT_SQUARE.contains(poly): 
+    if not UNIT_SQUARE.contains(poly):
         return Polygon()
 
     return poly
 
-def random_reservoir_polygon_in_context(config: GeneratorConfig, rng: np.random.Generator, context: Polygon) -> Polygon:
+
+def random_reservoir_polygon_in_context(
+    config: GeneratorConfig,
+    rng: np.random.Generator,
+    context: Polygon,
+) -> Polygon:
     """
     Generate an initial oil & gas polygon in the larger context square.
     """
-    n_vertices = int(rng.integers(config.reservoir_min_vertices, config.reservoir_max_vertices + 1))
+    n_vertices = int(
+        rng.integers(
+            config.reservoir_min_vertices,
+            config.reservoir_max_vertices + 1,
+        )
+    )
 
     minx, miny, maxx, maxy = context.bounds
     cx = rng.uniform(minx, maxx)
     cy = rng.uniform(miny, maxy)
 
+    # call the same function 'random_star_polygon' to generate polygons  
     return random_star_polygon(
         n_vertices=n_vertices,
         rng=rng,
@@ -84,9 +109,218 @@ def random_reservoir_polygon_in_context(config: GeneratorConfig, rng: np.random.
     )
 
 
+def random_external_reservoir_polygon(
+    config: GeneratorConfig,
+    rng: np.random.Generator,
+) -> Polygon:
+    """
+    Generate one external reservoir around a fixed configured center,
+    then scale it to a random target area.
+    """
+    n_vertices = int(
+        rng.integers(
+            config.external_reservoir_min_vertices,
+            config.external_reservoir_max_vertices + 1,
+        )
+    )
+
+    raw = random_star_polygon(
+        n_vertices=n_vertices,
+        rng=rng,
+        center=tuple(config.external_reservoir_center),
+        r_min=float(config.external_reservoir_r_min),
+        r_max=float(config.external_reservoir_r_max),
+    )
+
+    raw = ensure_valid_polygon(raw)
+
+    if raw.is_empty or raw.area <= 1e-12:
+        return Polygon()
+
+    target_area = rng.uniform(
+        float(config.external_reservoir_area_min),
+        float(config.external_reservoir_area_max),
+    )
+
+    scale_factor = np.sqrt(target_area / float(raw.area))
+    return ensure_valid_polygon(scale_about_centroid(raw, scale_factor))
+
+
+def get_reservoir_coverage_targets(config: GeneratorConfig) -> List[float]:
+    """
+    Convert reservoir coverage configuration to a list of fractions.
+
+    Examples
+    --------
+    n_reservoirs = 3
+    reservoir_coverage_percent = 5.0
+    -> [0.05, 0.05, 0.05]
+
+    n_reservoirs = 3
+    reservoir_coverage_percent = [5.0, 8.0, 3.0]
+    -> [0.05, 0.08, 0.03]
+    """
+    n_reservoirs = int(config.n_reservoirs)
+
+    if not (0 <= n_reservoirs <= 5):
+        raise ValueError("n_reservoirs must be between 0 and 5.")
+
+    cov = config.reservoir_coverage_percent
+
+    if isinstance(cov, (int, float)):
+        targets = [float(cov) / 100.0] * n_reservoirs
+    else:
+        if len(cov) != n_reservoirs:
+            raise ValueError(
+                "If reservoir_coverage_percent is a list, "
+                "its length must equal n_reservoirs."
+            )
+
+        targets = [float(x) / 100.0 for x in cov]
+
+    for target in targets:
+        if not (0.0 < target < 1.0):
+            raise ValueError(
+                "Each reservoir coverage percent must be between 0 and 100."
+            )
+
+    return targets
+
+
+def overlaps_existing_reservoirs(
+    reservoir: Polygon,
+    reservoirs: List[Polygon],
+    eps: float = 1e-12,
+) -> bool:
+    """
+    Check whether the new reservoir overlaps existing reservoirs.
+
+    Positive-area overlap is forbidden.
+    Boundary touching is allowed.
+    """
+    return any(
+        reservoir.intersection(old).area > eps
+        for old in reservoirs
+    )
+
+def decide_n_reservoir_centres(
+    reservoir: Polygon,
+    config: GeneratorConfig,
+) -> int:
+    """
+    Decide number of centres based on full reservoir polygon area.
+    """
+    area = float(reservoir.area)
+    small_threshold, medium_threshold = config.reservoir_centre_area_thresholds
+
+    if area <= small_threshold:
+        return 1
+    elif area <= medium_threshold:
+        return 2
+    else:
+        return 3
+
+
+def sample_points_inside_polygon(
+    polygon: Polygon,
+    rng: np.random.Generator,
+    n_samples: int,
+    max_attempts: int,
+) -> np.ndarray:
+    """
+    Uniformly sample valid points inside a polygon using rejection sampling.
+    """
+    if polygon.is_empty:
+        raise ValueError("Cannot sample from an empty polygon.")
+
+    # define a bounding box for sampling 
+    minx, miny, maxx, maxy = polygon.bounds
+
+    points = []
+    attempts = 0
+
+    while len(points) < n_samples and attempts < max_attempts:
+        attempts += 1
+
+        x = rng.uniform(minx, maxx)
+        y = rng.uniform(miny, maxy)
+        
+        # drop it if a point is outside the reservoir
+        if polygon.contains(Point(x, y)):
+            points.append([x, y])
+
+    if len(points) == 0:
+        # make sure to return a point inside the reservoir
+        rp = polygon.representative_point()
+        return np.array([[float(rp.x), float(rp.y)]], dtype=float)
+
+    return np.array(points, dtype=float)
+
+
+def generate_reservoir_centres(
+    reservoir: Polygon,
+    config: GeneratorConfig,
+    rng: np.random.Generator,
+) -> List[Tuple[float, float]]:
+    """
+    Generate reservoir centres/platforms.
+
+    Small reservoir:
+        1 centre, using centroid.
+
+    Medium / large reservoir:
+        sample points inside reservoir, then use sklearn KMeans.
+    """
+    n_centres = decide_n_reservoir_centres(reservoir, config)
+
+    if n_centres == 1:
+        c = reservoir.centroid
+
+        if not reservoir.contains(c):
+            c = reservoir.representative_point()
+
+        return [(float(c.x), float(c.y))]
+
+    points = sample_points_inside_polygon(
+        polygon=reservoir,
+        rng=rng,
+        n_samples=int(config.reservoir_centre_n_samples),
+        max_attempts=int(config.reservoir_centre_max_sampling_attempts),
+    )
+
+    if len(points) < n_centres:
+        return [(float(x), float(y)) for x, y in points]
+
+    kmeans = KMeans(
+        n_clusters=n_centres,
+        random_state=int(rng.integers(0, 2**32 - 1)),
+        n_init="auto",
+    )
+
+    kmeans.fit(points)
+    kmeans_centres = kmeans.cluster_centers_
+
+    centres = []
+
+    for x, y in kmeans_centres:
+        p = Point(float(x), float(y))
+
+        if reservoir.contains(p):
+            centres.append((float(x), float(y)))
+        else:
+            # KMeans centre can fall outside a non-convex polygon.
+            # Replace it with the nearest sampled point, which is guaranteed inside.
+            distances = np.linalg.norm(points - np.array([x, y]), axis=1)
+            nearest = points[int(np.argmin(distances))]
+            centres.append((float(nearest[0]), float(nearest[1])))
+
+    return centres
+
+
 def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInstance]:
     """
-    Generate deterministic problem instances.
+    Generate multiple valid problem instances by creating feasible regions, 
+    reservoirs, and reservoir centres according to the specified configuration.
 
     Parameters
     ----------
@@ -104,13 +338,8 @@ def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInst
     target_feasible = float(config.target_feasible_coverage_percent) / 100.0
     tol_feasible = float(config.feasible_tolerance_percent) / 100.0
 
-    target_reservoir = float(config.target_reservoir_coverage_percent) / 100.0
+    reservoir_targets = get_reservoir_coverage_targets(config)
     tol_reservoir = float(config.reservoir_tolerance_percent) / 100.0
-
-    if int(config.n_reservoirs==0 or target_reservoir == 0):
-        target_each = 0
-    else:
-        target_each = target_reservoir / int(config.n_reservoirs)
 
     problems: Dict[int, ProblemInstance] = {}
     attempts = 0
@@ -119,6 +348,7 @@ def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInst
         attempts += 1
 
         feasible_raw = random_feasible_polygon_inside_unit(config, rng)
+
         if feasible_raw.is_empty:
             continue
 
@@ -131,45 +361,106 @@ def generate_problem_instances(config: GeneratorConfig) -> Dict[int, ProblemInst
         except Exception:
             continue
 
-        reservoirs = []
-        reservoir_covs = []
+
+        reservoirs: List[Polygon] = []
+        reservoir_covs: List[float] = []
+        reservoir_centres: List[List[Tuple[float, float]]] = []
 
         ok = True
-        for _ in range(int(config.n_reservoirs)):
-            reservoir_raw = random_reservoir_polygon_in_context(config, rng, context)
-            if reservoir_raw.is_empty:
-                ok = False
-                break
 
-            try:
-                reservoir, reservoir_cov, _ = tune_polygon_uniform_scale_to_coverage(
-                    reservoir_raw,
-                    target_cov=target_each,
-                    tol=tol_reservoir,
+        for target_cov in reservoir_targets:
+            placed = False
+
+            for _ in range(int(config.max_reservoir_attempts)):
+                reservoir_raw = random_reservoir_polygon_in_context(
+                    config=config,
+                    rng=rng,
+                    context=context,
                 )
-            except Exception:
-                ok = False
+
+                if reservoir_raw.is_empty:
+                    continue
+
+                try:
+                    reservoir, reservoir_cov, _ = tune_polygon_uniform_scale_to_coverage(
+                        reservoir_raw,
+                        target_cov=target_cov,
+                        tol=tol_reservoir,
+                    )
+                except Exception:
+                    continue
+
+                if overlaps_existing_reservoirs(reservoir, reservoirs):
+                    continue
+                
+                centres = []
+
+                reservoirs.append(reservoir)
+                reservoir_covs.append(reservoir_cov)
+                reservoir_centres.append(centres)
+
+                placed = True
                 break
 
-            reservoirs.append(reservoir)
-            reservoir_covs.append(reservoir_cov)
+
+
+            if not placed:
+                ok = False
+                break
 
         if not ok:
             continue
 
         idx = len(problems) + 1
+
+
+        external_reservoir = None
+        external_reservoir_centres = []
+
+        for _ in range(int(config.max_external_reservoir_attempts)):
+            candidate = random_external_reservoir_polygon(config, rng)
+
+            if candidate.is_empty:
+                continue
+
+            if candidate.intersection(UNIT_SQUARE).area > 1e-12:
+                continue
+
+            if overlaps_existing_reservoirs(candidate, reservoirs):
+                continue
+
+            external_reservoir = candidate
+            external_reservoir_centres = generate_reservoir_centres(
+                reservoir=external_reservoir,
+                config=config,
+                rng=rng,
+            )
+            break
+
+        if external_reservoir is None:
+            continue
+
+
         problems[idx] = ProblemInstance(
             feasible=feasible,
             reservoirs=reservoirs,
             feasible_cov=feasible_cov,
             reservoir_covs=reservoir_covs,
+            reservoir_centres=reservoir_centres,
+            external_reservoir=external_reservoir,
+            external_reservoir_centres=external_reservoir_centres,
+            reservoir_centre_radius=float(config.reservoir_centre_radius),
             allow_boundary=bool(config.allow_boundary),
+            hub_outer_bound=float(config.hub_outer_bound),
         )
+
+
 
     if len(problems) < int(config.n_designs):
         raise RuntimeError(
             f"Only generated {len(problems)}/{config.n_designs} problems after {attempts} attempts. "
-            "Try increasing max_attempts or loosening tolerances."
+            "Try increasing max_attempts, increasing max_reservoir_attempts, "
+            "reducing n_reservoirs, reducing reservoir coverage, or loosening tolerances."
         )
 
     return problems

@@ -4,6 +4,12 @@ import numpy as np
 import pandas as pd
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]  # 指向 generator 文件夹
+sys.path.insert(0, str(PROJECT_ROOT))
+
 from config import GeneratorConfig
 from generator import generate_problem_instances
 from evaluation import WindFarmEvaluator
@@ -11,28 +17,34 @@ from visualization import plot_problem
 
 
 
-
+problem_seed = 1
+algorithm_seed = 2026
 
 config = GeneratorConfig(
     n_designs=3,
-    seed=2026,
-    n_reservoirs=4,
+    seed=1,
+    n_reservoirs=3,
     context_side=3,
     target_feasible_coverage_percent=95.0,
-    target_reservoir_coverage_percent=20.0,
+    reservoir_coverage_percent=10.0,   # assign 5% coverage percentage to all reservoirs
+    # reservoir_coverage_percent=[10.0, 15.0, 7.0, 3.5, 5.5], # assign different coverage percentages to reservoirs
+    max_reservoir_attempts=2000,
 )
 
-seed = config.seed
+CSV_PATH = f"results/random_search_{problem_seed}_{algorithm_seed}.csv"
 
-# CSV_PATH = f"results/random_search_seed{seed}.csv"
-CSV_PATH = f"results/nsga2_seed{seed}.csv"
+# CSV_PATH = f"results/nsga2_{problem_seed}_{algorithm_seed}.csv"
+
+# CSV_PATH = f"results/qlognehvi_{problem_seed}_{algorithm_seed}.csv"
+
+# CSV_PATH = f"results/qlognparego_{problem_seed}_{algorithm_seed}.csv"
 
 problems = generate_problem_instances(config)
 
-problem_2 = problems[2]
+problem = problems[3]
 
 
-evaluator = WindFarmEvaluator(problem_2, ensemble_file="Ensemble.pkl", n_turbines=5)
+evaluator = WindFarmEvaluator(problem, ensemble_file="Ensemble.pkl", n_turbines=5)
 
 
 
@@ -63,7 +75,7 @@ row = cur_feas.iloc[first_front_idx[pick_id]]
 
 print("Chosen eval_id:", row["eval_id"])
 print("f values:", row[["f1", "f2", "f3"]].to_dict())
-print("g values:", row[["g1", "g2"]].to_dict())
+print("g values:", row[["g1", "g2", "g3"]].to_dict())
 
 
 # Recover x and hub
@@ -77,12 +89,19 @@ print("x =", x)
 print("hub =", hub)
 
 
-
 plot_problem(
-    problem_2,
+    problem,
+    
     x=x,
     hub=hub,
+    len_plot=2,
     evaluator=evaluator,
-    title=f"NSGA2_seed{seed}",
-    path=f"results/NSGA2_seed{seed}.png"
+    title=f"random_search_{problem_seed}_{algorithm_seed}",
+    path=f"results/random_search_{problem_seed}_{algorithm_seed}.png"
+
+
+
 )
+
+
+

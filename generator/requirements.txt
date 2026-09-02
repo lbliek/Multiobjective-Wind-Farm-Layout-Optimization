@@ -8,3 +8,4 @@ xgboost
 # optimisation methods
 pandas
 pymoo
+scikit-learn

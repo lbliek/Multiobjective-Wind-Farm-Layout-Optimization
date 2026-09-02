@@ -4,19 +4,25 @@ from visualization import plot_problem
 
 from evaluation import WindFarmEvaluator
 
+
+problem_seed = 1
+
+
 config = GeneratorConfig(
     n_designs=3,
-    seed=2026,
-    n_reservoirs=4,
+    seed=problem_seed,
+    n_reservoirs=3,
     context_side=3,
     target_feasible_coverage_percent=95.0,
-    target_reservoir_coverage_percent=20.0,
+    reservoir_coverage_percent=10.0,   # assign 10% coverage percentage to all reservoirs
+    # reservoir_coverage_percent=[10.0, 15.0, 5.5], # assign different 10%, 15%, 5.5% coverage percentages to reservoirs
+    max_reservoir_attempts=2000,
 )
 
 problems = generate_problem_instances(config)
-problem_2 = problems[2]
+problem = problems[3]
 
-evaluator = WindFarmEvaluator(problem_2, ensemble_file="Ensemble.pkl", n_turbines=5)
+evaluator = WindFarmEvaluator(problem, ensemble_file="Ensemble.pkl", n_turbines=5)
 
 # candidate solution(locations of turbines and the hub)
 hub = [1.15, 1.35]
@@ -25,8 +31,11 @@ x = [0.87601546, 0.30708387, 0.95377465, 0.57068488, 0.51457379,
 
 print(evaluator.evaluate(x, hub))
 
-# problem plot
-plot_problem(problem_2, len_plot=1.6, title="Toy problem_2", path=f"results/problem_2.png")
+# # problem plot
+# plot_problem(problem, len_plot=10, title="Toy problem", path=f"results/problem.png")
 
 # problem and solution plot
-plot_problem(problem_2, x=x, hub=hub, len_plot=1.6, evaluator=evaluator, title="Solution", path=f"results/Solution.png")
+# plot_problem(problem, x=x, hub=hub, len_plot=12, evaluator=evaluator, title="Solution_test", path=f"results/Solution_test.png")
+
+# problem and solution plot
+plot_problem(problem, x=x, hub=hub, len_plot=10, evaluator=evaluator, title="Solution_test", path=f"results/Solution_test.png")
