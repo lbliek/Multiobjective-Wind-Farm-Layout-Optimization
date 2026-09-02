@@ -31,4 +31,4 @@ df, feas = run_random_search(
 
 # 4. 打印一些结果
 print("\nTop 5 feasible solutions (by f1):")
-print(feas.sort_values("f1", ascending=False).head())
+print(feas.sort_values("f1", ascending=True).head())
