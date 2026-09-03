@@ -4,8 +4,7 @@ import pickle
 import sys
 import numpy as np
 import xgboost as xgb
-from scipy.stats import truncnorm, norm
-from statistics import NormalDist
+from scipy.stats import truncnorm
 from instance import ProblemInstance
 from scipy.spatial.distance import cdist
 from scipy.sparse.csgraph import minimum_spanning_tree
@@ -40,7 +39,7 @@ class WindFarmEvaluator:
         n_turbines: int = 5,
         nr_birds: int = 100,
         bird_mean: float = -25000, # bird_mean = -25000 m is the distance of the center of birds from the edge of the wind farm
-        bird_angle: float = 270, # angle of bird_corridor in degrees (0-360), 270 degrees means the bird corridor is going down (south)
+        bird_angle: float = 0.1, # angle of bird_corridor in degrees (0-360), 270 degrees means the bird corridor is going down (south)
         x_sigma: float = 14, # decide std and bird group distribution
         rotor_diameter: float = 126,
         farm_length: float = 333.33 * 5,
