@@ -198,7 +198,7 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
 
     # Bird group
     if evaluator is not None:
-        bird_std = 25000 / evaluator.x_sigma
+        bird_std = np.abs(evaluator.bird_mean / evaluator.x_sigma)
         birds_m = truncnorm.rvs(
             evaluator.x_sigma,
             evaluator.x_sigma + evaluator.farm_length / bird_std,
@@ -208,9 +208,133 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
             random_state=2026
         )
 
-        birds_x = birds_m / evaluator.farm_length
+        # Randomly generate birds where the bird corridor is aligned with the horizontal axis y=0
+        # (this corresponds to an angle of 0)
+        birds_y = birds_m / evaluator.farm_length # distance from bird corridor and wind farm corner point
         rng_plot = np.random.default_rng(evaluator.seed + 1)
-        birds_y = rng_plot.uniform(0, 1, size=len(birds_x))
+        birds_x = rng_plot.uniform(0, 1, size=len(birds_y)) # overwrite this later
+
+
+        # Rotate birds for an angle other than 0
+        angle = evaluator.bird_angle
+        rad = angle * np.pi / 180  # convert angle to radians
+
+        if 0 <= angle <= 90:
+            Px = 1
+            Py = 0 #x and y of point where bird corridor touches wind farm (corner point)
+
+            for i in range(len(birds_y)):
+                minx = Px-birds_y[i]/(np.sin(rad)+0.000000001)
+                miny = Py
+                if minx<0:
+                    print('test', minx)
+                    miny = -1*np.tan(rad+0.000000001)*minx
+                    minx = 0
+                if minx>1:
+                    minx=1
+                    print('This should not happen?')
+                maxx = Px
+                maxy = Py+birds_y[i]/(np.cos(rad)+0.000000001)
+                if maxy>1:
+                    maxy=1
+                if maxy<0:
+                    maxy=0
+                p_min = np.asarray([minx, miny])
+                p_max = np.asarray([maxx, maxy])
+                maxdist = np.sqrt(np.dot(p_max-p_min,p_max-p_min)) #distance from one edge to the other
+                z = rng_plot.uniform(0, maxdist, size=1)[0] # distance along line
+                birds_x[i] = minx + z*np.cos(rad)
+                birds_y[i] = miny + z*np.sin(rad)
+        elif 90 < angle <= 180:
+            Px = 1
+            Py = 1
+
+            for i in range(len(birds_y)):
+                minx = Px
+                miny = Py+birds_y[i]/(np.cos(rad)+0.000000001)
+                if miny < 0:
+                    minx -= -1 * np.tan(rad - np.pi/2 + 0.000000001) * miny
+                    miny = 0
+                if miny > 1:
+                    miny = 1
+                    print('This should not happen?')
+                maxx = Px-birds_y[i]/(np.sin(rad)+0.000000001)
+                if maxx > 1:
+                    maxx=1
+                if maxx < 0:
+                    maxx = 0
+                maxy = Py
+                print(minx,maxx,miny,maxy)
+                p_min = np.asarray([minx, miny])
+                p_max = np.asarray([maxx, maxy])
+                maxdist = np.sqrt(np.dot(p_max-p_min,p_max-p_min)) #distance from one edge to the other
+                z = rng_plot.uniform(0, maxdist, size=1)[0] # distance along line
+                birds_x[i] = minx + z*np.cos(rad)
+                birds_y[i] = miny + z*np.sin(rad)
+
+        elif 180 < angle <= 270:
+            Px = 0
+            Py = 1
+
+            rad2 = rad-np.pi
+
+
+            for i in range(len(birds_y)):
+                minx = Px + birds_y[i] / (np.sin(rad2) + 0.000000001)
+                miny = Py
+                if minx > 1:
+                    miny -= np.tan(rad - np.pi + 0.000000001) * minx
+                    minx = 1
+                if minx < 0:
+                    minx = 0
+                    print('This should not happen?')
+
+                maxx = Px
+                maxy = Py - birds_y[i] / (np.cos(rad2) + 0.000000001)
+                if maxy > 1:
+                    maxy = 1
+                if maxy < 0:
+                    maxy = 0
+                print(minx, maxx, miny, maxy)
+                p_min = np.asarray([minx, miny])
+                p_max = np.asarray([maxx, maxy])
+                maxdist = np.sqrt(np.dot(p_max - p_min, p_max - p_min))  # distance from one edge to the other
+                z = rng_plot.uniform(0, maxdist, size=1)[0]  # distance along line
+                birds_x[i] = minx - z * np.cos(rad2)
+                birds_y[i] = miny - z * np.sin(rad2)
+        elif 270 < angle <= 360:
+            Px = 0
+            Py = 0
+            rad2 = rad - 1.5*np.pi
+
+            for i in range(len(birds_y)):
+                minx = Px
+                miny = Py + birds_y[i] / (np.sin(rad2) + 0.000000001)
+                if miny > 1:
+                    minx +=  np.tan(rad - 1.5*np.pi + 0.000000001) * miny
+                    miny = 1
+                if miny < 0:
+                    miny = 0
+                    print('This should not happen?')
+                maxx = Px + birds_y[i] / (np.cos(rad2) + 0.000000001)
+                if maxx > 1:
+                    maxx = 1
+                if maxx < 0:
+                    maxx = 0
+                maxy = Py
+
+                print(minx, maxx, miny, maxy)
+                p_min = np.asarray([minx, miny])
+                p_max = np.asarray([maxx, maxy])
+                maxdist = np.sqrt(np.dot(p_max - p_min, p_max - p_min))  # distance from one edge to the other
+                z = rng_plot.uniform(0, maxdist, size=1)[0]  # distance along line
+                birds_x[i] = minx + z * np.cos(rad)
+                birds_y[i] = miny + z * np.sin(rad)
+        else:
+            raise ValueError(f"Angle must be between 0 and 360 degrees, got {angle}")
+
+
+
 
         ax.scatter(birds_x, birds_y, s=10, marker='$v$', alpha=0.3, color="green", label="Birds")
 
