@@ -227,7 +227,6 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
                 minx = Px-birds_y[i]/(np.sin(rad)+0.000000001)
                 miny = Py
                 if minx<0:
-                    print('test', minx)
                     miny = -1*np.tan(rad+0.000000001)*minx
                     minx = 0
                 if minx>1:
@@ -264,7 +263,6 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
                 if maxx < 0:
                     maxx = 0
                 maxy = Py
-                print(minx,maxx,miny,maxy)
                 p_min = np.asarray([minx, miny])
                 p_max = np.asarray([maxx, maxy])
                 maxdist = np.sqrt(np.dot(p_max-p_min,p_max-p_min)) #distance from one edge to the other
@@ -295,7 +293,6 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
                     maxy = 1
                 if maxy < 0:
                     maxy = 0
-                print(minx, maxx, miny, maxy)
                 p_min = np.asarray([minx, miny])
                 p_max = np.asarray([maxx, maxy])
                 maxdist = np.sqrt(np.dot(p_max - p_min, p_max - p_min))  # distance from one edge to the other
@@ -323,7 +320,6 @@ def plot_problem(problem, x=None, hub=None, evaluator=None, len_plot=1.6, title:
                     maxx = 0
                 maxy = Py
 
-                print(minx, maxx, miny, maxy)
                 p_min = np.asarray([minx, miny])
                 p_max = np.asarray([maxx, maxy])
                 maxdist = np.sqrt(np.dot(p_max - p_min, p_max - p_min))  # distance from one edge to the other
