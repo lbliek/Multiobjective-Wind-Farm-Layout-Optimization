@@ -4,7 +4,8 @@ import pickle
 import sys
 import numpy as np
 import xgboost as xgb
-from scipy.stats import truncnorm
+from scipy.stats import truncnorm, norm
+from statistics import NormalDist
 from instance import ProblemInstance
 from scipy.spatial.distance import cdist
 from scipy.sparse.csgraph import minimum_spanning_tree
@@ -37,9 +38,10 @@ class WindFarmEvaluator:
         problem: ProblemInstance,
         ensemble_file: str = "Ensemble.pkl", # model used for obj1
         n_turbines: int = 5,
-        nr_birds: int = 1000,
-        bird_mean: float = -25000, # bird_mean = -25000 m is the distance of the center of birds from the point (0,0)
-        x_sigma: float = 12, # decide std and bird group distribution
+        nr_birds: int = 100,
+        bird_mean: float = -25000, # bird_mean = -25000 m is the distance of the center of birds from the edge of the wind farm
+        bird_angle: float = 270, # angle of bird_corridor in degrees (0-360), 270 degrees means the bird corridor is going down (south)
+        x_sigma: float = 14, # decide std and bird group distribution
         rotor_diameter: float = 126,
         farm_length: float = 333.33 * 5,
         seed: int = 2026,
@@ -48,6 +50,7 @@ class WindFarmEvaluator:
         self.n_turbines = n_turbines
         self.nr_birds = nr_birds
         self.bird_mean = bird_mean
+        self.bird_angle = bird_angle
         self.x_sigma = x_sigma
         self.rotor_diameter = rotor_diameter
         self.farm_length = farm_length
@@ -101,28 +104,72 @@ class WindFarmEvaluator:
         pred = self.ensemble.predict(X)
         return float(pred[0])
 
-
     def objective2(self, x) -> float:
         '''
         Objective 2: calculate the ratio of birds that are too close
+
+        Note: scores are relative values between 0 and 1 only for this bird corridor,
+        if the bird corridor changes, 0 and 1 will have different meanings
         '''
         x = np.asarray(x, dtype=float)
         coords = self._to_coords(x)
 
         bird_std = - self.bird_mean / self.x_sigma
 
+        # calculate how many birds fly in the wind farm area
+
+        # min and max distance that birds can be away from the corridor
+        # while still crossing the wind farm area
+
+        # calculate distance between corner point and where bird corridor touches wind farm
+        # See https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+        # Line defined by point and angle
+        # {\displaystyle \operatorname {distance} (P,\theta ,(x_{0},y_{0}))=|\cos(\theta )(P_{y}-y_{0})-\sin(\theta )(P_{x}-x_{0})|}
+        if 0 <= self.bird_angle <= 90:
+            Px = 1
+            Py = 0 #x and y of point where bird corridor touches wind farm (corner point)
+            x0 = 0
+            y0 = 1 # furthest point from bird corridor within wind farm (corner point)
+        elif 90 < self.bird_angle <= 180:
+            Px = 1
+            Py = 1
+            x0 = 0
+            y0 = 0
+        elif 180 < self.bird_angle <= 270:
+            Px = 0
+            Py = 1
+            x0 = 1
+            y0 = 1
+        elif 270 < self.bird_angle <= 360:
+            Px = 0
+            Py = 0
+            x0 = 1
+            y0 = 1
+        else:
+            raise ValueError(f"Angle must be between 0 and 360 degrees, got {self.bird_angle}")
+        rad = self.bird_angle * np.pi / 180  # convert angle to radians
+        # maximum distance for birds away from bird corridor, can be up to sqrt(2)*farm_length for 45 degrees
+        interval_length = self.farm_length*(np.abs(np.cos(rad)*(Py-y0)-np.sin(rad)*(Px-x0)))
+
+        # calculate distance between wind turbines and bird corridor
+        BCdist = np.zeros(self.n_turbines) #distance from wind turbines to bird corridor
+        for i in range(self.n_turbines):
+            BCdist[i] = self.farm_length*(np.abs(np.cos(rad)*(Py-coords[i,1])-np.sin(rad)*(Px-coords[i,0])))
+
+
         # a truncated normal distribution to simulate the distribution of birds
         birds = truncnorm.rvs(
-            self.x_sigma,                                  # lower bound, eg. sigma unite from self.bird_mean is (0,0) 
-            self.x_sigma + self.farm_length / bird_std,    # upper bound
+            self.x_sigma,                                  # lower bound, e.g. 4 standard deviations
+            self.x_sigma + interval_length / bird_std,     # upper bound
             loc=self.bird_mean,                            # mean
             scale=bird_std,                                # std
-            size=self.nr_birds,                            # mean
+            size=self.nr_birds,                            # nr. of samples
             random_state=self.seed                         # ramdom seed
         )
 
-        leftmost = np.min(coords[:, 0]) * self.farm_length # the distance of the leftmost turbines
-        threshold = leftmost - self.rotor_diameter         # the distance of the threshold
+        # calculate distance
+        d_closest =  np.min(BCdist)# the distance of the turbine closest to the bird corridor
+        threshold = d_closest - self.rotor_diameter         # the distance of the threshold
         close_birds = np.sum(birds >= threshold) / self.nr_birds # ratio of close_birds
         return float(close_birds)
     
