@@ -207,13 +207,14 @@ class WindFarmEvaluator:
     
     
  
-    def constraint2(self, x, hub) -> int:
+    def constraint2(self, x) -> int:
+    # def constraint2(self, x, hub) -> int:
         '''
         Constraint 2: check the feasibility of turbines and the hub 
         n_violate is the constraint violation
         '''
         coords = self._to_coords(x)
-        hub = self._validate_hub(hub)
+        # hub = self._validate_hub(hub)
 
         n_violate = 0
 
@@ -221,19 +222,21 @@ class WindFarmEvaluator:
             if self.problem.feasibility_turbine(xi, yi) == 0:
                 n_violate += 1
 
-        if self.problem.feasibility_hub(hub[0], hub[1]) == 0:
-            n_violate += 1
+        # constraint2 does not apply to hub anymore
+        # if self.problem.feasibility_hub(hub[0], hub[1]) == 0:
+        #     n_violate += 1
 
         return int(n_violate)
     
 
 
-    def constraint3(self, x, hub) -> int:
+    def constraint3(self, x) -> int:
+    # def constraint3(self, x, hub) -> int:
         '''
         Constraint 3: turbines and hub should not be too close to external reservoir platforms
         '''
         coords = self._to_coords(x)
-        hub = self._validate_hub(hub)
+        # hub = self._validate_hub(hub)
 
         centres = getattr(self.problem, "external_reservoir_centres", [])
         radius = float(getattr(self.problem, "reservoir_centre_radius", 0.0))
@@ -248,9 +251,10 @@ class WindFarmEvaluator:
         turbine_dists = cdist(coords, centres)
         n_violate += int(np.sum(np.any(turbine_dists < radius, axis=1)))
 
-        hub_dists = cdist(hub.reshape(1, 2), centres)
-        if np.any(hub_dists < radius):
-            n_violate += 1
+        # constraint3 does not apply to hub anymore
+        # hub_dists = cdist(hub.reshape(1, 2), centres)
+        # if np.any(hub_dists < radius):
+        #     n_violate += 1
 
         return int(n_violate)
 
@@ -264,6 +268,6 @@ class WindFarmEvaluator:
             "f2": self.objective2(x),
             "f3": self.objective3(x, hub),
             "g1": self.constraint1(x),
-            "g2": self.constraint2(x, hub),
-            "g3": self.constraint3(x, hub),
+            "g2": self.constraint2(x),
+            "g3": self.constraint3(x),
         }
