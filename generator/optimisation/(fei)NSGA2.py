@@ -7,30 +7,29 @@ from pymoo.optimize import minimize
 from pymoo.core.callback import Callback
 
 
-# def decode_solution(candidate, n_turbines):
-#     """
-#     Decode candidate vector into:
-#     - x: turbine decision vector [x1,...,xn,y1,...,yn]
-#     - hub: [hub_x, hub_y]
-#     """
-#     candidate = np.asarray(candidate, dtype=float)
+def decode_solution(candidate, n_turbines):
+    """
+    Decode candidate vector into:
+    - x: turbine decision vector [x1,...,xn,y1,...,yn]
+    - hub: [hub_x, hub_y]
+    """
+    candidate = np.asarray(candidate, dtype=float)
 
-#     x = candidate[: 2 * n_turbines]
-#     hub = candidate[2 * n_turbines: 2 * n_turbines + 2].tolist()
+    x = candidate[: 2 * n_turbines]
+    hub = candidate[2 * n_turbines: 2 * n_turbines + 2].tolist()
 
-#     return x, hub
+    return x, hub
 
 
-# def sample_solution_nsga2(problem, n_turbines: int, hub_outer_bound=1.5, rng=None):
-def sample_solution_nsga2(n_turbines: int, rng=None):
+def sample_solution_nsga2(problem, n_turbines: int, hub_outer_bound=1.5, rng=None):
     """
     Generate one initial solution for NSGA2.
 
     Turbines:
         sampled in [0,1] x [0,1]
 
-    # Hub:
-    #     sampled uniformly from [0, hub_outer_bound]^2 \ [0,1]^2
+    Hub:
+        sampled uniformly from [0, hub_outer_bound]^2 \ [0,1]^2
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -47,78 +46,56 @@ def sample_solution_nsga2(n_turbines: int, rng=None):
     ys = [p[1] for p in turbine_coords]
     x = np.array(xs + ys, dtype=float)
 
-    # # sample hub uniformly from [0, hub_outer_bound]^2 \ [0,1]^2
-    # if hub_outer_bound <= 1.0:
-    #     raise ValueError("hub_outer_bound must be larger than 1.0.")
+    # sample hub uniformly from [0, hub_outer_bound]^2 \ [0,1]^2
+    if hub_outer_bound <= 1.0:
+        raise ValueError("hub_outer_bound must be larger than 1.0.")
 
-    # area_top = 1.0 * (hub_outer_bound - 1.0)
-    # area_right = (hub_outer_bound - 1.0) * hub_outer_bound
+    area_top = 1.0 * (hub_outer_bound - 1.0)
+    area_right = (hub_outer_bound - 1.0) * hub_outer_bound
 
-    # prob_top = area_top / (area_top + area_right)
+    prob_top = area_top / (area_top + area_right)
 
-    # if rng.random() < prob_top:
-    #     # top region: [0,1] x [1,hub_outer_bound]
-    #     hx = rng.uniform(0.0, 1.0)
-    #     hy = rng.uniform(1.0, hub_outer_bound)
-    # else:
-    #     # right region: [1,hub_outer_bound] x [0,hub_outer_bound]
-    #     hx = rng.uniform(1.0, hub_outer_bound)
-    #     hy = rng.uniform(0.0, hub_outer_bound)
+    if rng.random() < prob_top:
+        # top region: [0,1] x [1,hub_outer_bound]
+        hx = rng.uniform(0.0, 1.0)
+        hy = rng.uniform(1.0, hub_outer_bound)
+    else:
+        # right region: [1,hub_outer_bound] x [0,hub_outer_bound]
+        hx = rng.uniform(1.0, hub_outer_bound)
+        hy = rng.uniform(0.0, hub_outer_bound)
 
-    # hub = [float(hx), float(hy)]
+    hub = [float(hx), float(hy)]
 
-    return x
+    return x, hub
 
-
-# class NSGA2Problem(ElementwiseProblem):
-#     def __init__(self, evaluator):
-#         self.evaluator = evaluator
-#         n = evaluator.n_turbines
-#         hub_outer_bound = evaluator.problem.hub_outer_bound
-
-#         xl = np.concatenate([
-#             np.zeros(2 * n),
-#             np.array([0.0, 0.0])
-#         ])
-
-#         xu = np.concatenate([
-#             np.ones(2 * n),
-#             np.array([hub_outer_bound, hub_outer_bound])
-#         ])
-
-#         super().__init__(
-#             n_var=2 * n + 2,
-#             n_obj=3,
-#             n_constr=3,
-#             xl=xl,
-#             xu=xu
-#         )
-
-#     def _evaluate(self, candidate, out, *args, **kwargs):
-#         x, hub = decode_solution(candidate, self.evaluator.n_turbines)
-#         res = self.evaluator.evaluate(x, hub)
-
-#         out["F"] = [res["f1"], res["f2"], res["f3"]]
-#         out["G"] = [res["g1"], res["g2"], res["g3"]]
 
 class NSGA2Problem(ElementwiseProblem):
-
-    def __init__(self, evaluator, hub):
+    def __init__(self, evaluator):
         self.evaluator = evaluator
-        self.hub = np.asarray(hub, dtype=float)
-
         n = evaluator.n_turbines
+        hub_outer_bound = evaluator.problem.hub_outer_bound
+
+        xl = np.concatenate([
+            np.zeros(2 * n),
+            np.array([0.0, 0.0])
+        ])
+
+        xu = np.concatenate([
+            np.ones(2 * n),
+            np.array([hub_outer_bound, hub_outer_bound])
+        ])
 
         super().__init__(
-            n_var=2 * n,
+            n_var=2 * n + 2,
             n_obj=3,
             n_constr=3,
-            xl=np.zeros(2 * n),
-            xu=np.ones(2 * n),
+            xl=xl,
+            xu=xu
         )
 
-    def _evaluate(self, x, out, *args, **kwargs):
-        res = self.evaluator.evaluate(x, self.hub)
+    def _evaluate(self, candidate, out, *args, **kwargs):
+        x, hub = decode_solution(candidate, self.evaluator.n_turbines)
+        res = self.evaluator.evaluate(x, hub)
 
         out["F"] = [res["f1"], res["f2"], res["f3"]]
         out["G"] = [res["g1"], res["g2"], res["g3"]]
@@ -147,25 +124,6 @@ class MyCallback(Callback):
             self.G.append(off.get("G"))
 
 
-# def make_initial_population(evaluator, pop_size: int, seed: int = 2026):
-#     """
-#     Generate an initial feasible population using NSGA2's own sampling logic.
-#     """
-#     rng = np.random.default_rng(seed)
-#     X_init = []
-
-#     for _ in range(pop_size):
-#         x, hub = sample_solution_nsga2(
-#             problem=evaluator.problem,
-#             n_turbines=evaluator.n_turbines,
-#             hub_outer_bound=evaluator.problem.hub_outer_bound,
-#             rng=rng,
-#         )
-#         candidate = np.concatenate([x, np.asarray(hub, dtype=float)])
-#         X_init.append(candidate)
-
-#     return np.array(X_init, dtype=float)
-
 def make_initial_population(evaluator, pop_size: int, seed: int = 2026):
     """
     Generate an initial feasible population using NSGA2's own sampling logic.
@@ -174,25 +132,27 @@ def make_initial_population(evaluator, pop_size: int, seed: int = 2026):
     X_init = []
 
     for _ in range(pop_size):
-        x = sample_solution_nsga2(
+        x, hub = sample_solution_nsga2(
+            problem=evaluator.problem,
             n_turbines=evaluator.n_turbines,
+            hub_outer_bound=evaluator.problem.hub_outer_bound,
             rng=rng,
         )
-        X_init.append(x)
+        candidate = np.concatenate([x, np.asarray(hub, dtype=float)])
+        X_init.append(candidate)
 
     return np.array(X_init, dtype=float)
 
 
 def run_nsga2(
     evaluator,
-    hub,
     n_eval: int = 500,
     pop_size: int = 50,
     seed: int = 2026,
     save_csv: bool = True,
     csv_path: str = "nsga2_results.csv",
 ):
-    problem = NSGA2Problem(evaluator, hub)
+    problem = NSGA2Problem(evaluator)
     callback = MyCallback()
 
     X_init = make_initial_population(
@@ -215,8 +175,7 @@ def run_nsga2(
         verbose=False
     )
 
-    # n_var = 2 * evaluator.n_turbines + 2
-    n_var = 2 * evaluator.n_turbines
+    n_var = 2 * evaluator.n_turbines + 2
 
     X_all = np.vstack(callback.X) if len(callback.X) else np.empty((0, n_var))
     F_all = np.vstack(callback.F) if len(callback.F) else np.empty((0, 3))
@@ -232,13 +191,13 @@ def run_nsga2(
 
     rows = []
     for i in range(n):
-        x = X_all[i]
-        # x, hub = decode_solution(candidate, evaluator.n_turbines)
+        candidate = X_all[i]
+        x, hub = decode_solution(candidate, evaluator.n_turbines)
 
         row = {
             "eval_id": i,
             "x": list(x),
-            "hub": list(hub),
+            "hub": hub,
             "f1": float(F_all[i, 0]),
             "f2": float(F_all[i, 1]),
             "f3": float(F_all[i, 2]),

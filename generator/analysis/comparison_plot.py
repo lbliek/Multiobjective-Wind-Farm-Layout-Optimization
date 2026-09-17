@@ -13,18 +13,25 @@ REF_POINT = np.array([1.1, 1.1, 1.1], dtype=float)
 results_dir = Path("results")
 
 CSV_PATHS = {
-    "Random": results_dir / "random_search_1_2026.csv",
-    "NSGA2": results_dir / "nsga2_1_2026.csv",
-    "EHVI": results_dir / "qlognehvi_1_2026.csv",
-    "ParEGO": results_dir / "qlognparego_1_2026.csv",
+    # "Random": results_dir / "random_search_1_2026.csv",
+    # "NSGA2": results_dir / "nsga2_1_2026.csv",
+    # "EHVI": results_dir / "qlognehvi_1_2026.csv",
+    # "ParEGO": results_dir / "qlognparego_1_2026.csv",
+
+    "Random": results_dir / "random_classC_problem_1_seed_2026.csv",
+    "NSGA2": results_dir / "nsga2_classC_problem_1_seed_2026.csv",
+    "EHVI": results_dir / "qlognehvi_classC_problem_1_seed_2026.csv",
+    
+    
 }
 
 
 
-f_min = np.array([-5.77324791e+01,  1.10000000e-02,  1.87497145e+03], dtype=float)
-f_max = np.array([-1.55639257e+01,  1.00000000e+00,  3.77577478e+03], dtype=float)
+# f_min = np.array([-5.77324791e+01,  1.10000000e-02,  1.87497145e+03], dtype=float)
+# f_max = np.array([-1.55639257e+01,  1.00000000e+00,  3.77577478e+03], dtype=float)
 
-
+f_min = np.array([-64.06877899,  0,  1518.41508745], dtype=float)
+f_max = np.array([-1.63654194e+01,  3.00000000e-01,  4.13916751e+03], dtype=float)
 
 denom = f_max - f_min
 denom[denom == 0] = 1.0
@@ -66,7 +73,7 @@ color_map = {
     "Random": "C0",
     "NSGA2": "C1",
     "EHVI": "C2",
-    "ParEGO": "C3",
+    # "ParEGO": "C3",
 }
 
 for label, path in CSV_PATHS.items():
@@ -79,7 +86,7 @@ plt.title(f"Cumulative HV Curve (batch={BATCH_SIZE})")
 plt.legend()
 plt.grid(True)
 
-output_path = results_dir / "hv_curve_all_algorithms.png"
+output_path = results_dir / "hv_curve_all_algorithms2.png"
 plt.savefig(output_path, dpi=300, bbox_inches="tight")
 plt.show()
 

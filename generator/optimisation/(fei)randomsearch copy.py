@@ -1,14 +1,13 @@
 import numpy as np
 import pandas as pd
 
-
-def sample_solution(n_turbines: int, rng=None):
-    """Sample turbine coordinates in [0, 1] x [0, 1]."""
+def sample_solution(problem, n_turbines: int, rng=None):
     if rng is None:
         rng = np.random.default_rng()
 
     turbine_coords = []
 
+    # sample turbines only in [0,1] x [0,1]
     for _ in range(n_turbines):
         xi = rng.uniform(0.0, 1.0)
         yi = rng.uniform(0.0, 1.0)
@@ -16,32 +15,53 @@ def sample_solution(n_turbines: int, rng=None):
 
     xs = [p[0] for p in turbine_coords]
     ys = [p[1] for p in turbine_coords]
+    x = np.array(xs + ys, dtype=float)
 
-    return np.array(xs + ys, dtype=float)
+    # sample hub uniformly from [0, hub_outer_bound]^2 \ [0,1]^2
+    hub_outer_bound = problem.hub_outer_bound
+
+    if hub_outer_bound <= 1.0:
+        raise ValueError("hub_outer_bound must be larger than 1.0.")
+
+    # Region A: top region [0,1] x [1,hub_outer_bound]
+    area_top = 1.0 * (hub_outer_bound - 1.0)
+
+    # Region B: right region [1,hub_outer_bound] x [0,hub_outer_bound]
+    area_right = (hub_outer_bound - 1.0) * hub_outer_bound
+
+    prob_top = area_top / (area_top + area_right)
+
+    if rng.random() < prob_top:
+        hx = rng.uniform(0.0, 1.0)
+        hy = rng.uniform(1.0, hub_outer_bound)
+    else:
+        hx = rng.uniform(1.0, hub_outer_bound)
+        hy = rng.uniform(0.0, hub_outer_bound)
+
+    hub = [float(hx), float(hy)]
+
+    return x, hub
 
 
 def run_random_search(
     evaluator,
-    hub,
     n_eval: int = 500,
+    # hub_bounds=(1.0, 1.5),
     seed: int = 2026,
     save_csv: bool = True,
     csv_path: str = "random_search_results.csv",
 ):
-    """Randomly sample turbine layouts using one fixed hub."""
-    hub = np.asarray(hub, dtype=float)
-
     rng = np.random.default_rng(seed)
     rows = []
 
     for i in range(n_eval):
-        # Candidate contains turbine coordinates only
-        x = sample_solution(
+        x, hub = sample_solution(
+            problem=evaluator.problem,
             n_turbines=evaluator.n_turbines,
+            # hub_bounds=hub_bounds,
             rng=rng,
         )
 
-        # The hub is fixed for all evaluations
         res = evaluator.evaluate(x, hub)
 
         f1 = res["f1"]
@@ -51,12 +71,12 @@ def run_random_search(
         g2 = res["g2"]
         g3 = res["g3"]
 
-        feasible = int((g1 <= 0) and (g2 <= 0) and (g3 <= 0))
+        feasible = int((g1 <= 0) and (g2 <= 0) and (g3 <= 0))   
 
-        rows.append({
+        row = {
             "eval_id": i,
-            "x": list(x),
-            "hub": list(hub),
+            "x": list(np.asarray(x, dtype=float)),
+            "hub": list(np.asarray(hub, dtype=float)),
             "f1": float(f1),
             "f2": float(f2),
             "f3": float(f3),
@@ -64,7 +84,8 @@ def run_random_search(
             "g2": float(g2),
             "g3": float(g3),
             "feasible": feasible,
-        })
+        }
+        rows.append(row)
 
     df = pd.DataFrame(rows)
 

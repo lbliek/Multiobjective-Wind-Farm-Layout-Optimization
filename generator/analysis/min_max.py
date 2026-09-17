@@ -4,10 +4,15 @@ from pathlib import Path
 results_dir = Path("results")
 
 files = [
-    "random_search_1_2026.csv",
-    "nsga2_1_2026.csv",
-    "qlognehvi_1_2026.csv",
-    "qlognparego_1_2026.csv",
+    # "random_search_1_2026.csv",
+    # "nsga2_1_2026.csv",
+    # "qlognehvi_1_2026.csv",
+    # "qlognparego_1_2026.csv",
+
+    
+    "random_classC_problem_1_seed_2026.csv",
+    "nsga2_classC_problem_1_seed_2026.csv",
+    "qlognehvi_classC_problem_1_seed_2026.csv",
 ]
 
 all_feas = []

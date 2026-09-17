@@ -4,10 +4,14 @@ from pathlib import Path
 results_dir = Path("results")
 
 files = {
-    "Random Search": "random_search_1_2026.csv",
-    "NSGA2": "nsga2_1_2026.csv",
-    "EHVI": "qlognehvi_1_2026.csv",
-    "ParEGO": "qlognparego_1_2026.csv",
+    # "Random Search": "random_search_1_2026.csv",
+    # "NSGA2": "nsga2_1_2026.csv",
+    # "EHVI": "qlognehvi_1_2026.csv",
+    # "ParEGO": "qlognparego_1_2026.csv",
+
+    "Random Search": "random_classC_problem_1_seed_2026.csv",
+    "NSGA2": "nsga2_classC_problem_1_seed_2026.csv",
+    "EHVI": "qlognehvi_classC_problem_1_seed_2026.csv",
 }
 
 for name, filename in files.items():
