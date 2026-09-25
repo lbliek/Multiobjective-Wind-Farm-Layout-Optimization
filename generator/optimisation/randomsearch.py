@@ -44,9 +44,9 @@ def run_random_search(
         # The hub is fixed for all evaluations
         res = evaluator.evaluate(x, hub)
 
-        f1 = res["f1"]
+        f13 = res["f13"] #combine objectives 1 and 3 into one
         f2 = res["f2"]
-        f3 = res["f3"]
+        #f3 = res["f3"]
         g1 = res["g1"]
         g2 = res["g2"]
         g3 = res["g3"]
@@ -57,9 +57,9 @@ def run_random_search(
             "eval_id": i,
             "x": list(x),
             "hub": list(hub),
-            "f1": float(f1),
+            "f13": float(f13),
             "f2": float(f2),
-            "f3": float(f3),
+            #"f3": float(f3),
             "g1": float(g1),
             "g2": float(g2),
             "g3": float(g3),

@@ -5,7 +5,7 @@ from optimisation.qLogNParEGO import run_qlognparego  # use your actual filename
 
 
 algorithm_seed = 2026
-problem_nr = 0
+problem_nr = 19
 
 
 with open("results/generated/classC/problems.pkl", "rb") as f:
@@ -41,7 +41,7 @@ evaluator = WindFarmEvaluator(
 df, feas, model = run_qlognparego(
     evaluator=evaluator,
     hub=hub,
-    n_eval=500,
+    n_eval=55,
     n_initial=50,
     seed=algorithm_seed,
     save_csv=True,
@@ -54,5 +54,5 @@ df, feas, model = run_qlognparego(
 
 print("Problem number:", problem_nr + 1)
 print("Fixed hub:", hub)
-print("\nTop 5 feasible solutions (by f1):")
-print(feas.sort_values("f1", ascending=True).head())
+print("\nTop 5 feasible solutions (by f13):")
+print(feas.sort_values("f13", ascending=True).head())

@@ -5,7 +5,7 @@ from optimisation.NSGA2 import run_nsga2
 
 
 algorithm_seed = 2026
-problem_nr = 0  
+problem_nr = 19
 
 
 # Load one fixed benchmark set
@@ -54,5 +54,5 @@ df, feas, res = run_nsga2(
 
 print("Problem number:", problem_nr + 1)
 print("Fixed hub:", hub)
-print("\nTop 5 feasible solutions (by f1):")
-print(feas.sort_values("f1", ascending=True).head())
+print("\nTop 5 feasible solutions (by f13):")
+print(feas.sort_values("f13", ascending=True).head())

@@ -115,18 +115,19 @@ def run_qlognparego(
     def evaluate_blackbox(x: np.ndarray):
         res = evaluator.evaluate(x, hub)
 
-        f1 = float(res["f1"])
+        #f1 = float(res["f1"])
         f2 = float(res["f2"])
-        f3 = float(res["f3"])
+        #f3 = float(res["f3"])
+        f13 = float(res["f13"]) #combine objectives f1 and f3 into one objective
         g1 = float(res["g1"])
         g2 = float(res["g2"])
         g3 = float(res["g3"])
 
-        return f1, f2, f3, g1, g2, g3
+        return f13, f2, g1, g2, g3
 
-    def pack_Y(f1, f2, f3, g1, g2, g3):
+    def pack_Y(f13, f2, g1, g2, g3):
         return torch.tensor(
-            [[-f1, -f2, -f3, g1, g2, g3]],
+            [[-f13, -f2, g1, g2, g3]],
             device=device,
             dtype=dtype,
         )
@@ -185,9 +186,9 @@ def run_qlognparego(
             dtype=dtype,
         )
 
-        f1, f2, f3, g1, g2, g3 = evaluate_blackbox(candidate_np)
+        f13, f2, g1, g2, g3 = evaluate_blackbox(candidate_np)
 
-        Y_list.append(pack_Y(f1, f2, f3, g1, g2, g3))
+        Y_list.append(pack_Y(f13, f2, g1, g2, g3))
         X_list.append(candidate_tensor.view(1, -1))
 
         feasible = int((g1 <= 0.0) and (g2 <= 0.0) and (g3 <= 0.0))
@@ -198,9 +199,9 @@ def run_qlognparego(
             # "hub": hub,
             "x": list(candidate_np),
             "hub": list(hub),
-            "f1": f1,
+            "f13": f13,
             "f2": f2,
-            "f3": f3,
+            #"f3": f3,
             "g1": g1,
             "g2": g2,
             "g3": g3,
@@ -242,7 +243,7 @@ def run_qlognparego(
         model = fit_model(X, Y)
 
         weights = torch.rand(
-            3,
+            2,
             device=device,
             dtype=dtype,
         )
@@ -252,11 +253,11 @@ def run_qlognparego(
             model=model,
             X_baseline=X,
             scalarization_weights=weights,
-            objective=IdentityMCMultiOutputObjective(outcomes=[0, 1, 2]),
+            objective=IdentityMCMultiOutputObjective(outcomes=[0, 1]),
             constraints=[
+                lambda samples: samples[..., 2],
                 lambda samples: samples[..., 3],
                 lambda samples: samples[..., 4],
-                lambda samples: samples[..., 5],
             ],
             sampler=sampler,
         )
@@ -300,8 +301,8 @@ def run_qlognparego(
             )
 
         # x, hub, f1, f2, f3, g1, g2, g3 = evaluate_blackbox(candidate_np)
-        f1, f2, f3, g1, g2, g3 = evaluate_blackbox(candidate_np)
-        y_next = pack_Y(f1, f2, f3, g1, g2, g3)
+        f13, f2, g1, g2, g3 = evaluate_blackbox(candidate_np)
+        y_next = pack_Y(f13, f2, g1, g2, g3)
 
         X = torch.cat([X, x_next_internal.view(1, -1)], dim=0)
         Y = torch.cat([Y, y_next], dim=0)
@@ -314,9 +315,9 @@ def run_qlognparego(
             # "hub": hub,
             "x": list(candidate_np),
             "hub": list(hub),
-            "f1": f1,
+            "f13": f13,
             "f2": f2,
-            "f3": f3,
+            #"f3": f3,
             "g1": g1,
             "g2": g2,
             "g3": g3,

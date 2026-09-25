@@ -28,9 +28,6 @@ def sample_solution_nsga2(n_turbines: int, rng=None):
 
     Turbines:
         sampled in [0,1] x [0,1]
-
-    # Hub:
-    #     sampled uniformly from [0, hub_outer_bound]^2 \ [0,1]^2
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -111,7 +108,8 @@ class NSGA2Problem(ElementwiseProblem):
 
         super().__init__(
             n_var=2 * n,
-            n_obj=3,
+            #n_obj=3,
+            n_obj=2,
             n_constr=3,
             xl=np.zeros(2 * n),
             xu=np.ones(2 * n),
@@ -120,7 +118,8 @@ class NSGA2Problem(ElementwiseProblem):
     def _evaluate(self, x, out, *args, **kwargs):
         res = self.evaluator.evaluate(x, self.hub)
 
-        out["F"] = [res["f1"], res["f2"], res["f3"]]
+        #out["F"] = [res["f1"], res["f2"], res["f3"]]
+        out["F"] = [res["f13"], res["f2"]] # combine objectives 1 and 3 into one financial objective
         out["G"] = [res["g1"], res["g2"], res["g3"]]
 
 
@@ -219,7 +218,7 @@ def run_nsga2(
     n_var = 2 * evaluator.n_turbines
 
     X_all = np.vstack(callback.X) if len(callback.X) else np.empty((0, n_var))
-    F_all = np.vstack(callback.F) if len(callback.F) else np.empty((0, 3))
+    F_all = np.vstack(callback.F) if len(callback.F) else np.empty((0, 2))
     G_all = np.vstack(callback.G) if len(callback.G) else np.empty((0, 3))
 
     n = min(n_eval, len(X_all))
@@ -239,9 +238,9 @@ def run_nsga2(
             "eval_id": i,
             "x": list(x),
             "hub": list(hub),
-            "f1": float(F_all[i, 0]),
+            "f13": float(F_all[i, 0]),
             "f2": float(F_all[i, 1]),
-            "f3": float(F_all[i, 2]),
+            #"f3": float(F_all[i, 2]),
             "g1": float(g1[i]),
             "g2": float(g2[i]),
             "g3": float(g3[i]),
