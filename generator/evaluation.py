@@ -237,6 +237,8 @@ class WindFarmEvaluator:
 
             if i >= begins:
                 discE += AEP*1000/((1+discount_rate)**i) # assume AEP is the same each year, and convert to MWh
+        if discE <= 1e-8:
+            discE = 1e-8 #prevent division by 0 in LCOE formula
 
         discC *= 1000000 # Convert from million euros to euros
         LCOE = discC / discE # Levellized cost of electricity in euro/MWh. Should be around 50-150 euro, though below 50 possible
