@@ -219,19 +219,20 @@ class WindFarmEvaluator:
                 installation = 0.807*MW*self.n_turbines #disregarding offshore cable installation
                 cable_costs = 0.269*MW*self.n_turbines #disregarding export cable which presumably goes from substation to land
 
-                decommission_costs = 0.853*5*self.n_turbines #Disregarded.
+                decommission_costs = 0.853*MW*self.n_turbines #Disregarded.
 
                 # correct cable costs according to cable length, assume they are between 50% and 150% of given costs
                 max_CL = self.farm_length * (self.n_turbines + 1)  # most cable lengths should be below this number
                 min_CL = self.rotor_diameter * 2 * self.n_turbines  # most cable lengths should be above this number
                 cable_costs_corrected = 0.5* cable_costs + cable_costs*(CL-min_CL)/(max_CL-min_CL)
+                #cables are around 4% of total costs including OPEX
 
                 # Calculate CAPEX, disregard decommission costs
                 CAPEX = (project_development+construction_turbine+balance_of_plant+
                          installation+cable_costs_corrected)
                 CAPEX *= pound_to_euro # convert to euros
 
-            OPEX = 0.085*5*self.n_turbines #in pounds, from [1]
+            OPEX = 0.085*MW*self.n_turbines #in pounds, from [1]
             OPEX *= pound_to_euro  # convert to euros
             discC += (CAPEX + OPEX)/((1+discount_rate)**i) # all costs
 

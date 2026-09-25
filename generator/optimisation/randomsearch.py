@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import time
 
 
 def sample_solution(n_turbines: int, rng=None):
@@ -34,6 +35,8 @@ def run_random_search(
     rng = np.random.default_rng(seed)
     rows = []
 
+    start_time = time.perf_counter()
+
     for i in range(n_eval):
         # Candidate contains turbine coordinates only
         x = sample_solution(
@@ -41,8 +44,12 @@ def run_random_search(
             rng=rng,
         )
 
+
+
         # The hub is fixed for all evaluations
         res = evaluator.evaluate(x, hub)
+
+
 
         f13 = res["f13"] #combine objectives 1 and 3 into one
         f2 = res["f2"]
@@ -65,6 +72,11 @@ def run_random_search(
             "g3": float(g3),
             "feasible": feasible,
         })
+
+    end_time = time.perf_counter()
+
+    computation_time = end_time - start_time
+    print(f"RS computation time: {computation_time} seconds")
 
     df = pd.DataFrame(rows)
 

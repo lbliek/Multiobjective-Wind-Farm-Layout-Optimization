@@ -162,6 +162,9 @@ def run_qlognparego(
 
     n_initial = min(int(n_initial), int(n_eval))
 
+    start_time = time.perf_counter()
+
+
     for i in range(n_initial):
         # x, hub = sample_solution(
         #     problem=evaluator.problem,
@@ -327,7 +330,7 @@ def run_qlognparego(
         iter_time = time.perf_counter() - t_start_iter
         print(f"qLogParEGO progress: {t + 1}/{n_eval}, iter_time={iter_time:.3f}s")
 
-    total_time = time.perf_counter() - t_start_total
+    total_time = time.perf_counter() - start_time
     print(f"\nTotal qLogParEGO loop time: {total_time:.3f} seconds")
 
     df = pd.DataFrame(records)

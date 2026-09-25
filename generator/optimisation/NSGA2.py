@@ -6,6 +6,8 @@ from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
 from pymoo.core.callback import Callback
 
+import time
+
 
 # def decode_solution(candidate, n_turbines):
 #     """
@@ -205,6 +207,8 @@ def run_nsga2(
         sampling=X_init,
     )
 
+    start_time = time.perf_counter()
+
     res = minimize(
         problem,
         algorithm,
@@ -213,6 +217,11 @@ def run_nsga2(
         callback=callback,
         verbose=False
     )
+
+    end_time = time.perf_counter()
+
+    computation_time = end_time - start_time
+    print(f"NSGA2 computation time: {computation_time} seconds")
 
     # n_var = 2 * evaluator.n_turbines + 2
     n_var = 2 * evaluator.n_turbines
