@@ -187,6 +187,65 @@ class WindFarmEvaluator:
 
         return float(total_length) * self.farm_length
 
+    def objective1_3(self,x,hub) -> float:
+        '''
+        Combines objectives 1 and 3 into one financial objective
+        using the formula for levelized cost of electricity (LCOE).
+        Objective is to be minimized.
+        '''
+
+        AEP = -1*self.objective1(x) # -1 * annual energy production in GWh, averaged over 5 years
+        CL = self.objective3(x,hub) # cable length in meters
+
+        # Use LCOE formula and numbers from [1]: https://guidetoanoffshorewindfarm.com/wind-farm-costs/
+        # Using some simplifications. Also note that numbers are for a 67-turbine UK wind farm.
+
+        expected_lifetime = 30 # nr. of years the system is expected to produce energy
+        discount_rate = 0.065 # annual effective discount rate
+        begins = 3 # interval in which energy production begins
+        if begins >= expected_lifetime:
+            print('This might cause division by 0')
+        discE = 0 # discounted sum of electrical energy
+        discC = 0 # discounted sum of costs
+        pound_to_euro = 1.17 #converting from pounds to euros
+        MW = 5 # wind turbines in the simulator are 5MW turbines.
+        for i in range(expected_lifetime):
+            CAPEX = 0
+            if i==1:
+                # Numbers are in pounds, from [1]
+                project_development = 0.155*MW*self.n_turbines
+                construction_turbine = 1.2*MW*self.n_turbines
+                balance_of_plant = 1.024*MW*self.n_turbines #disregarding cables but including export cable
+                installation = 0.807*MW*self.n_turbines #disregarding offshore cable installation
+                cable_costs = 0.269*MW*self.n_turbines #disregarding export cable which presumably goes from substation to land
+
+                decommission_costs = 0.853*5*self.n_turbines #Disregarded.
+
+                # correct cable costs according to cable length, assume they are between 50% and 150% of given costs
+                max_CL = self.farm_length * (self.n_turbines + 1)  # most cable lengths should be below this number
+                min_CL = self.rotor_diameter * 2 * self.n_turbines  # most cable lengths should be above this number
+                cable_costs_corrected = 0.5* cable_costs + cable_costs*(CL-min_CL)/(max_CL-min_CL)
+
+                # Calculate CAPEX, disregard decommission costs
+                CAPEX = (project_development+construction_turbine+balance_of_plant+
+                         installation+cable_costs_corrected)
+                CAPEX *= pound_to_euro # convert to euros
+
+            OPEX = 0.085*5*self.n_turbines #in pounds, from [1]
+            OPEX *= pound_to_euro  # convert to euros
+            discC += (CAPEX + OPEX)/((1+discount_rate)**i) # all costs
+
+            if i >= begins:
+                discE += AEP*1000/((1+discount_rate)**i) # assume AEP is the same each year, and convert to MWh
+
+        discC *= 1000000 # Convert from million euros to euros
+        LCOE = discC / discE # Levellized cost of electricity in euro/MWh. Should be around 50-150 euro, though below 50 possible
+        # In reality LCOE can drop to 50 or even below with modern turbines, but with these 5MW
+        # wind turbines, around 162 is the lowest we can get
+        # Cable distance can influence the LCOE by a few euros/MWh (definitely no more than 10 euros)
+
+        return LCOE
+
 
     def constraint1(self, x) -> float:
         '''
@@ -267,6 +326,7 @@ class WindFarmEvaluator:
             "f1": self.objective1(x),
             "f2": self.objective2(x),
             "f3": self.objective3(x, hub),
+            "f13": self.objective1_3(x,hub),
             "g1": self.constraint1(x),
             "g2": self.constraint2(x),
             "g3": self.constraint3(x),
